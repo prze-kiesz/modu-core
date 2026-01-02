@@ -44,54 +44,60 @@ The complete modu-core project follows this directory layout:
 modu-core/
 ├── L1_Presentation/             # Layer 1: User interfaces, APIs
 │   ├── http_server/             # Module example
+│   │   ├── interface/
 │   │   ├── src/
-│   │   ├── ifc/
 │   │   ├── utest/
 │   │   ├── itest/
 │   │   ├── doc/
+│   │   ├── http_server-config.cmake
 │   │   └── CMakeLists.txt
 │   └── rest_api/                # Module example
 │       └── ...
 │
 ├── L2_Services/                 # Layer 2: Business logic, services
 │   ├── user_service/            # Module example
+│   │   ├── interface/
 │   │   ├── src/
-│   │   ├── ifc/
 │   │   ├── utest/
 │   │   ├── itest/
 │   │   ├── doc/
+│   │   ├── user_service-config.cmake
 │   │   └── CMakeLists.txt
 │   └── auth_service/            # Module example
 │       └── ...
 │
 ├── L3_Storage/                  # Layer 3: Data access, repositories
 │   ├── user_repository/         # Module example
+│   │   ├── interface/
 │   │   ├── src/
-│   │   ├── ifc/
 │   │   ├── utest/
 │   │   ├── itest/
 │   │   ├── doc/
+│   │   ├── user_repository-config.cmake
 │   │   └── CMakeLists.txt
 │   └── database_connection/     # Module example
 │       └── ...
 │
 ├── L4_Infrastructure/           # Layer 4: Logging, caching, config
 │   ├── logger/                  # Module example
+│   │   ├── interface/
 │   │   ├── src/
-│   │   ├── ifc/
 │   │   ├── utest/
 │   │   ├── itest/
 │   │   ├── doc/
+│   │   ├── logger-config.cmake
 │   │   └── CMakeLists.txt
 │   ├── cache_manager/           # Module example
 │   └── config_manager/          # Module example
 │
 ├── L5_Common/                   # Layer 5: Utilities, helpers
 │   ├── string_utils/            # Module example
+│   │   ├── interface/
 │   │   ├── src/
-│   │   ├── ifc/
 │   │   ├── utest/
+│   │   ├── itest/
 │   │   ├── doc/
+│   │   ├── string_utils-config.cmake
 │   │   └── CMakeLists.txt
 │   └── math_utils/              # Module example
 │       └── ...
@@ -116,12 +122,12 @@ L3_Storage
 L4_Infrastructure
      ↓ includes from
 L5_Common (Bottom - no dependencies)
-```
-
-### Include Guidelines
-
-- Layer N can include interfaces from Layer N-1, N-2, etc. (lower layers)
-- Layer N CANNOT include interfaces from Layer N+1 (higher layers)
+```nterface/ directory
+- Example from L1_Presentation module including from L2_Services:
+  ```cpp
+  #include "L2_Services/user_service/interface/user_service.h"
+  #include "L3_Storage/user_repository/interface/user_repository.h"
+  #include "L5_Common/string_utils/interfaceom Layer N+1 (higher layers)
 - Each module exposes its public API through ifc/ directory
 - Example from L1_Presentation module including from L2_Services:
   ```cpp
@@ -136,33 +142,36 @@ Every module MUST follow this directory structure:
 
 ```
 module_name/
+├── interface/               # Public interface/API
+│   └── *.h                 # Header files defining module's public API
 ├── src/                    # Implementation files
 │   ├── *.cpp              # C++ implementation files
 │   └── *.h                # Internal header files (used only within this module)
-├── ifc/                   # Public interface (exported to other modules)
-│   └── *.h                # Header files defining module's public API
 ├── utest/                 # Unit tests (test individual functions)
+│   ├── CMakeLists.txt
 │   └── test_*.cpp         # Unit test files
 ├── itest/                 # Integration tests (test module interactions)
+│   ├── CMakeLists.txt
 │   └── test_*.cpp         # Integration test files
 ├── doc/                   # Module documentation
 │   └── README.md          # API documentation and usage guide
-└── CMakeLists.txt         # Build configuration
+├── module_name-config.cmake   # CMake configuration
+└── CMakeLists.txt         # Module build configuration
 ```
 
 ### Module Directory Explanations
+
+- **interface/** - Public interface/API
+  - Only header files with public function declarations
+  - Defines contract between this module and others
+  - Other modules import only from interface/
+  - Stable API that follows semantic versioning
 
 - **src/** - Implementation files containing module logic
   - Internal implementation details
   - Functions and classes not exposed in public API
   - Internal headers only used within this module
   - Should NOT be used directly by other modules
-
-- **ifc/** - Public interface/API
-  - Only header files with public function declarations
-  - Defines contract between this module and others
-  - Other modules import only from ifc/
-  - Stable API that follows semantic versioning
 
 - **utest/** - Unit tests
   - Test individual functions and methods in isolation
