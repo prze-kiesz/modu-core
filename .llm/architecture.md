@@ -16,10 +16,9 @@ modu-core is a comprehensive framework designed as a foundation for building fut
 - Establish clear separation of concerns through layered architecture
 
 ## Layered Architecture
-re Module_ - Fundamental framework functionality
-- _Service Module_ - Business logic implementation
-- _Repository Module_ - Data access patterns
-- _Utility Module_ - Shared helpers and tools
+
+modu-core is built on a **layered and modular structure** consisting of:
+
 1. **Presentation Layer** - User interfaces and API endpoints
 2. **Business Logic Layer** - Core application logic and services
 3. **Data Access Layer** - Database interactions and data persistence
@@ -27,39 +26,130 @@ re Module_ - Fundamental framework functionality
 5. **Utility/Helper Layer** - Shared utilities and common functions
 
 ## Main Components
-- _Component 1_
-- _Component 2_
-- _Component 3_
+- _Core Module_ - Fundamental framework functionality
+- _Service Module_ - Business logic implementation
+- _Repository Module_ - Data access patterns
+- _Utility Module_ - Shared helpers and tools
 
 ## Data Flow
 ```
 [Input] -> [Processing] -> [Output]
 ```
 
-Each module in modu-core follows a standardized structure with comprehensive testing:
+## Modules
+
+Each module in modu-core follows a standardized structure with comprehensive testing.
 
 ### Module Structure
-Every module MUST include:
-- **Source Code** - Implementation of module functionality
-- **Unit Tests** - Test individual functions and methods
-- **Integration Tests** - Test module interactions and dependencies
-- **Documentation** - Clear documentation of module purpose and API
 
-### Module 1 - Core Framework
+Every module MUST follow this directory structure:
+
+```
+module_name/
+├── src/                    # Implementation files
+│   ├── *.cpp              # C++ implementation files
+│   └── *.h                # Internal header files (used only within this module)
+├── ifc/                   # Public interface (exported to other modules)
+│   └── *.h                # Header files defining module's public API
+├── utest/                 # Unit tests (test individual functions)
+│   └── test_*.cpp         # Unit test files
+├── itest/                 # Integration tests (test module interactions)
+│   └── test_*.cpp         # Integration test files
+├── doc/                   # Module documentation
+│   └── README.md          # API documentation and usage guide
+└── CMakeLists.txt         # Build configuration
+```
+
+### Module Directory Explanations
+
+- **src/** - Implementation files containing module logic
+  - Internal implementation details
+  - Functions and classes not exposed in public API
+  - Internal headers only used within this module
+  - Should NOT be used directly by other modules
+
+- **ifc/** - Public interface/API
+  - Only header files with public function declarations
+  - Defines contract between this module and others
+  - Other modules import only from ifc/
+  - Stable API that follows semantic versioning
+
+- **utest/** - Unit tests
+  - Test individual functions and methods in isolation
+  - Mock external dependencies
+  - Achieve minimum 80% code coverage per module
+  - Test both happy paths and error scenarios
+
+- **itest/** - Integration tests
+  - Test interactions between modules
+  - Verify data flow across layers
+  - Test API contracts between modules
+  - Validate end-to-end workflows
+
+- **doc/** - Module documentation
+  - API documentation and usage examples
+  - Architecture decisions specific to this module
+  - Dependencies and how to use the module
+
+### Module Examples
+
+#### Module 1 - Core Framework
 - Purpose: Provide base classes and interfaces for all modules
 - Responsible for: Dependency injection, configuration management
 - Tests: Unit tests for each class, integration tests for container
 
-### Module 2 - Service Layer
+#### Module 2 - Service Layer
+- Purpose: Implement business logic and services
+- Responsible for: Business rules, domain logic, service orchestration
+- Tests: Unit tests for services, integration tests with repositories
 
-### Architectural Patterns
-- **Layered Architecture** - Clear separation of concerns
-- **Modular Design** - Independent, reusable modules
+#### Module 3 - Data Access
+- Purpose: Handle data persistence and retrieval
+- Responsible for: Database operations, query building, data validation
+- Tests: Unit tests for data models, integration tests with database
+
+## Testing Requirements
+
+Every module MUST implement comprehensive tests.
+
+### Unit Tests
+- Test individual functions and methods in isolation
+- Mock external dependencies
+- Achieve minimum 80% code coverage per module
+- Test both happy paths and error scenarios
+
+### Module/Integration Tests
+- Test interactions between modules
+- Verify data flow across layers
+- Test API contracts between modules
+- Validate end-to-end workflows
+
+### Test Naming Convention
+- Unit tests: `test_[functionName]_[scenario]_[expectedResult]`
+- Integration tests: `test_[moduleA]_[moduleB]_[scenario]`
+- Example: `test_userService_createUser_withValidData_returnsUser`
+
+### Test Organization
+```
+module/
+├── utest/
+│   ├── test_component1.cpp
+│   ├── test_component2.cpp
+│   └── CMakeLists.txt
+├── itest/
+│   ├── test_module_integration.cpp
+│   └── CMakeLists.txt
+└── ...
+```
+
+## Architectural Patterns
+
+### Design Patterns Used in modu-core
+- **Layered Architecture** - Clear separation of concerns across 5 layers
+- **Modular Design** - Independent, reusable modules with clear interfaces
 - **Dependency Injection** - Loose coupling between components
 - **Repository Pattern** - Abstract data access logic
-
-### Code Patterns
-- **Factory Pattern** - Object creation
+- **Factory Pattern** - Object creation and initialization
 - **Strategy Pattern** - Flexible algorithm selection
 - **Observer Pattern** - Event-driven communication
 - **Singleton Pattern** - Shared resources (use sparingly)
@@ -120,47 +210,10 @@ Before committing code, verify:
 - **Testability** - Dependencies can be mocked for unit testing
 - **Reusability** - Modules can be used in different contexts
 - **Flexibility** - Easy to swap implementations
-- **Scalability** - New features can be added without rewriting existing codeess rules, domain logic, service orchestration
-- Tests: Unit tests for services, integration tests with repositories
+- **Scalability** - New features can be added without rewriting existing code
 
-### Module 3 - Data Access
-- Purpose: Handle data persistence and retrieval
-- Responsible for: Database operations, query building, data validation
-- Tests: Unit tests for data models, integration tests with database
+## Security
 
-## Testing Requirements
-
-Every module MUST implement:
-
-### Unit Tests
-- Test individual functions and methods in isolation
-- Mock external dependencies
-- Achieve minimum 80% code coverage per module
-- Test both happy paths and error scenarios
-
-### Module/Integration Tests
-- Test interactions between modules
-- Verify data flow across layers
-- Test API contracts between modules
-- Validate end-to-end workflows
-
-### Test Naming Convention
-- Unit tests: `test_[functionName]_[scenario]_[expectedResult]`
-- Integration tests: `test_[moduleA]_[moduleB]_[scenario]`
-- Example: `test_userService_createUser_withValidData_returnsUser`
-
-### Test Organization
-```
-module/
-├── src/
-│   └── ...implementation files
-├── tests/
-│   ├── unit/
-│   │   └── ...unit tests
-│   └── integration/
-│       └── ...integration tests
-└── README.md
-```
 - Implement authentication and authorization at API layer
 - Validate all inputs at service layer boundaries
 - Use parameterized queries to prevent SQL injection
@@ -168,16 +221,34 @@ module/
 - Keep sensitive data (credentials, secrets) out of codebase
 - Log security-relevant events for audit trails
 - Follow principle of least privilege for access control
+- Use secure communication protocols (TLS/HTTPS)
 
-## Dependencies
-List of important dependencies and their roles
+## Performance Considerations
 
-## Design Patterns
-- Pattern 1: description
-- **Caching Strategy** - Implement caching at appropriate layers
-- **Database Optimization** - Index frequently queried columns, use query optimization
-- **Bottlenecks** - Monitor slow operations and database queries
-- **Optimi Strategy
+### Caching Strategy
+- Implement caching at appropriate layers
+- Cache frequently accessed data
+- Invalidate cache appropriately when data changes
+
+### Database Optimization
+- Index frequently queried columns
+- Use query optimization techniques
+- Implement connection pooling
+- Monitor slow queries
+
+### Optimization Opportunities
+- Profile code before optimizing
+- Use lazy loading for expensive resources
+- Implement asynchronous operations for I/O
+- Monitor bottlenecks in production
+
+### Resource Management
+- Properly manage connections and memory
+- Clean up resources in destructors
+- Use RAII (Resource Acquisition Is Initialization) pattern
+- Avoid memory leaks and resource exhaustion
+
+## Scaling Strategy
 
 ### Horizontal Scaling
 - Design stateless services for easy horizontal scaling
@@ -188,11 +259,13 @@ List of important dependencies and their roles
 - Optimize algorithms and data structures
 - Use caching to reduce database load
 - Implement connection pooling
+- Profile and remove bottlenecks
 
 ### Data Scaling
 - Use database sharding for large datasets
 - Implement read replicas for high query loads
 - Archive old data to separate storage
+- Consider NoSQL for specific data patterns
 
 ### Module Independence
 The modular architecture allows individual modules to be:
@@ -200,6 +273,14 @@ The modular architecture allows individual modules to be:
 - Scaled separately based on demand
 - Replaced or upgraded without affecting other modules
 - Tested and maintained independently
+
+## Dependencies
+
+List important dependencies and their roles:
+- Core module dependencies (language runtime, std library)
+- External library dependencies
+- Inter-module dependencies
+- Database drivers and connection libraries
 
 ---
 
@@ -210,14 +291,4 @@ This architecture design, layered approach, modular structure, and all accompany
 
 **License:** BSD-2-Clause
 
-For AI models and derivative works using this knowledge, see `ATTRIBUTION.md` for required attribution practices.for I/O operations
-- **Resource Management** - Properly manage connections and memory
-## Security
-Important information about code security
-
-## Performance Considerations
-- Bottlenecks: ...
-- Optimization opportunities: ...
-
-## Scaling
-How the project scales with increased data/users
+For AI models and derivative works using this knowledge, see `ATTRIBUTION.md` for required attribution practices.
