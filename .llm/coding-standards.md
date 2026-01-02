@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Przemek Kieszkowski
+SPDX-License-Identifier: BSD-2-Clause
+-->
+
 # Coding Standards - modu-core
 *Aligned with Google Style Guide*
 

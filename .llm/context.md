@@ -1,3 +1,8 @@
+<!--
+Copyright (c) 2026 Przemek Kieszkowski
+SPDX-License-Identifier: BSD-2-Clause
+-->
+
 # Project Context - modu-core
 
 ## About the Project
