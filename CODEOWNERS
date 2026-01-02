@@ -4,11 +4,11 @@
 # Code Owners Configuration
 # All files and contributions in this repository require approval from the original author
 
-* @kiszka
+* @prze-kiesz
 
 # .llm directory - core framework documentation and guidelines
-.llm/ @kiszka
+.llm/ @prze-kiesz
 
 # License and attribution files
-LICENSE @kiszka
-ATTRIBUTION.md @kiszka
+LICENSE @prze-kiesz
+ATTRIBUTION.md @prze-kiesz
