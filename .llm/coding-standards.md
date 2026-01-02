@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause
 - Avoid magic numbers - use named constants
 - Maximum line length: **80 characters** (hard limit)
 - Every file should end with a newline
-- Use 2 or 4 spaces for indentation (consistently throughout the project)
+- Use 2 spaces for indentation (consistently throughout the project)
 
 ## Naming Conventions (Google Style)
 

@@ -19,11 +19,11 @@ modu-core is a comprehensive framework designed as a foundation for building fut
 
 modu-core is built on a **layered and modular structure** consisting of:
 
-1. **Presentation Layer** - User interfaces and API endpoints
-2. **Business Logic Layer** - Core application logic and services
-3. **Data Access Layer** - Database interactions and data persistence
-4. **Infrastructure Layer** - Cross-cutting concerns (logging, caching, security)
-5. **Utility/Helper Layer** - Shared utilities and common functions
+1. **L1_Presentation** - User interfaces and API endpoints
+2. **L2_Services** - Core application logic and business services
+3. **L3_Storage** - Database interactions and data persistence
+4. **L4_Infrastructure** - Cross-cutting concerns (logging, caching, security, config)
+5. **L5_Common** - Shared utilities and common functions
 
 ## Main Components
 - _Core Module_ - Fundamental framework functionality
@@ -36,9 +36,99 @@ modu-core is built on a **layered and modular structure** consisting of:
 [Input] -> [Processing] -> [Output]
 ```
 
-## Modules
+## Project Structure
 
-Each module in modu-core follows a standardized structure with comprehensive testing.
+The complete modu-core project follows this directory layout:
+
+```
+modu-core/
+├── L1_Presentation/             # Layer 1: User interfaces, APIs
+│   ├── http_server/             # Module example
+│   │   ├── src/
+│   │   ├── ifc/
+│   │   ├── utest/
+│   │   ├── itest/
+│   │   ├── doc/
+│   │   └── CMakeLists.txt
+│   └── rest_api/                # Module example
+│       └── ...
+│
+├── L2_Services/                 # Layer 2: Business logic, services
+│   ├── user_service/            # Module example
+│   │   ├── src/
+│   │   ├── ifc/
+│   │   ├── utest/
+│   │   ├── itest/
+│   │   ├── doc/
+│   │   └── CMakeLists.txt
+│   └── auth_service/            # Module example
+│       └── ...
+│
+├── L3_Storage/                  # Layer 3: Data access, repositories
+│   ├── user_repository/         # Module example
+│   │   ├── src/
+│   │   ├── ifc/
+│   │   ├── utest/
+│   │   ├── itest/
+│   │   ├── doc/
+│   │   └── CMakeLists.txt
+│   └── database_connection/     # Module example
+│       └── ...
+│
+├── L4_Infrastructure/           # Layer 4: Logging, caching, config
+│   ├── logger/                  # Module example
+│   │   ├── src/
+│   │   ├── ifc/
+│   │   ├── utest/
+│   │   ├── itest/
+│   │   ├── doc/
+│   │   └── CMakeLists.txt
+│   ├── cache_manager/           # Module example
+│   └── config_manager/          # Module example
+│
+├── L5_Common/                   # Layer 5: Utilities, helpers
+│   ├── string_utils/            # Module example
+│   │   ├── src/
+│   │   ├── ifc/
+│   │   ├── utest/
+│   │   ├── doc/
+│   │   └── CMakeLists.txt
+│   └── math_utils/              # Module example
+│       └── ...
+│
+├── .llm/                        # AI/LLM guidelines
+├── .clang-format                # Code formatting rules
+├── .clang-tidy                  # Static analysis rules
+├── CODEOWNERS                   # Code ownership
+├── CMakeLists.txt               # Root build configuration
+└── LICENSE                      # BSD-2-Clause license
+```
+
+### Layer Dependencies
+
+```
+L1_Presentation (Top)
+     ↓ includes from
+L2_Services
+     ↓ includes from
+L3_Storage
+     ↓ includes from
+L4_Infrastructure
+     ↓ includes from
+L5_Common (Bottom - no dependencies)
+```
+
+### Include Guidelines
+
+- Layer N can include interfaces from Layer N-1, N-2, etc. (lower layers)
+- Layer N CANNOT include interfaces from Layer N+1 (higher layers)
+- Each module exposes its public API through ifc/ directory
+- Example from L1_Presentation module including from L2_Services:
+  ```cpp
+  #include "L2_Services/user_service/ifc/user_service.h"
+  #include "L3_Storage/user_repository/ifc/user_repository.h"
+  #include "L5_Common/string_utils/ifc/string_utils.h"
+  ```
 
 ### Module Structure
 
