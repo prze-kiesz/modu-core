@@ -136,7 +136,121 @@ L5_Common (Bottom - no dependencies)
   #include "L5_Common/string_utils/ifc/string_utils.h"
   ```
 
-### Module Structure
+### Layer Dependencies
+
+```
+L1_Presentation (Top)
+     ↓ includes from
+L2_Services
+     ↓ includes from
+L3_Storage
+     ↓ includes from
+L4_Infrastructure
+     ↓ includes from
+L5_Common (Bottom - no dependencies)
+```
+
+## Build System and Module Management
+
+modu-core uses a **modular CMake build system** where each module is self-contained and self-configuring.
+
+### Module Configuration with -config.cmake
+
+Each module includes a `<module_name>-config.cmake` file that:
+1. Defines the module target (library/object file)
+2. Specifies private include directories (src/)
+3. Lists source files to compile
+4. Creates the library/object file
+5. Exports the public interface/ directory
+6. Integrates itself into the main project
+
+**Example from drv_main-config.cmake:**
+```cmake
+set(CURRENT_LIB_NAME "drv_main")
+set(CURRENT_TARGET "${PROJECT_NAME}-${CURRENT_LIB_NAME}")
+
+# Prevent multiple inclusion
+if (TARGET ${CURRENT_TARGET})
+    return()
+endif()
+
+# Define source files
+set(CURRENT_SOURCES_LIST ${CMAKE_CURRENT_LIST_DIR}/src/drv_main.cpp)
+set(CURRENT_PRIVATE_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
+
+# Create library as OBJECT (to be linked later)
+add_library(${CURRENT_TARGET} OBJECT ${CURRENT_SOURCES_LIST})
+
+# Configure include directories
+target_include_directories(${CURRENT_TARGET}
+    PUBLIC ${CMAKE_CURRENT_LIST_DIR}        # Access to interface/
+    PRIVATE ${CURRENT_PRIVATE_INCLUDE_DIR}  # Access to src/
+)
+
+# Export public interface for other modules
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/interface>
+)
+
+# Link module to main project
+target_link_libraries(${PROJECT_NAME} ${CURRENT_TARGET})
+```
+
+### Root CMakeLists.txt - Dynamic Module Discovery
+
+The root `CMakeLists.txt` automatically discovers all modules by scanning layer directories:
+
+```cmake
+# Build CMAKE_PREFIX_PATH for all layer modules
+set(LAYER_DIRECTORIES L1_Presentation L2_Services L3_Storage L4_Infrastructure L5_Common)
+
+foreach(LAYER ${LAYER_DIRECTORIES})
+    set(LAYER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${LAYER}")
+    if(IS_DIRECTORY ${LAYER_PATH})
+        # Add each module directory to CMAKE_PREFIX_PATH
+        file(GLOB MODULES "${LAYER_PATH}/*")
+        foreach(MODULE ${MODULES})
+            if(IS_DIRECTORY ${MODULE})
+                list(APPEND CMAKE_PREFIX_PATH "${MODULE}")
+            endif()
+        endforeach()
+    endif()
+endforeach()
+```
+
+**Benefits:**
+- ✅ Modules are automatically discovered without manual registration
+- ✅ Each module is independent and self-contained
+- ✅ Adding new modules requires no changes to root CMakeLists.txt
+- ✅ Layer hierarchy is automatically enforced
+
+### Module Discovery via find_package()
+
+Once CMAKE_PREFIX_PATH is populated, the main entry point (L1_Presentation/main) uses `find_package()` to locate and load modules:
+
+**Example from L1_Presentation/main/CMakeLists.txt:**
+```cmake
+find_package("drv_main" REQUIRED)
+find_package("drv_os" REQUIRED)
+find_package("drv_terminate" REQUIRED)
+find_package("calculator" REQUIRED)
+find_package("mes_engine" REQUIRED)
+```
+
+CMake automatically:
+1. Searches CMAKE_PREFIX_PATH for `<module_name>-config.cmake`
+2. Loads and executes the config file
+3. Registers the module target
+4. Makes the interface/ headers available to the project
+
+### Build Flow
+
+1. **Root CMakeLists.txt** scans all layer directories
+2. **Populates CMAKE_PREFIX_PATH** with all module paths
+3. **Loads L1_Presentation/main** as subdirectory (entry point)
+4. **find_package()** locates and loads modules from CMAKE_PREFIX_PATH
+5. **Each -config.cmake** file executes and integrates the module
+6. **Final executable** is built with all modules linked together
 
 Every module MUST follow this directory structure:
 
