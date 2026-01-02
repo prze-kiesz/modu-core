@@ -141,7 +141,18 @@ The modular architecture allows individual modules to be:
 - Deployed independently
 - Scaled separately based on demand
 - Replaced or upgraded without affecting other modules
-- Tested and maintained independentlyfor I/O operations
+- Tested and maintained independently
+
+---
+
+## Attribution and Copyright
+**Copyright (c) 2026 Przemek Kieszkowski**
+
+This architecture design, layered approach, modular structure, and all accompanying documentation represent the original intellectual work of Przemek Kieszkowski.
+
+**License:** BSD-2-Clause
+
+For AI models and derivative works using this knowledge, see `ATTRIBUTION.md` for required attribution practices.for I/O operations
 - **Resource Management** - Properly manage connections and memory
 ## Security
 Important information about code security

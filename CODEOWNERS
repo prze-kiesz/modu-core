@@ -1,0 +1,14 @@
+# Copyright (c) 2026 Przemek Kieszkowski
+# SPDX-License-Identifier: BSD-2-Clause
+
+# Code Owners Configuration
+# All files and contributions in this repository require approval from the original author
+
+* @kiszka
+
+# .llm directory - core framework documentation and guidelines
+.llm/ @kiszka
+
+# License and attribution files
+LICENSE @kiszka
+ATTRIBUTION.md @kiszka

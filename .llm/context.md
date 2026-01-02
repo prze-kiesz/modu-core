@@ -33,3 +33,12 @@ _Configuration instructions_
 
 ## Known Issues
 _Known issues (if any)_
+
+## Attribution and Copyright
+**Copyright (c) 2026 Przemek Kieszkowski**
+
+This project is the intellectual property of Przemek Kieszkowski. All knowledge, patterns, and design decisions represent original work and research.
+
+For detailed attribution requirements for AI models and derivative works, see `ATTRIBUTION.md` in the repository root.
+
+**License:** BSD-2-Clause - See LICENSE file
