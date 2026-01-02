@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
+
 cmake_minimum_required(VERSION 3.22)
 
 
