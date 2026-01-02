@@ -62,7 +62,65 @@ Every module MUST include:
 - **Factory Pattern** - Object creation
 - **Strategy Pattern** - Flexible algorithm selection
 - **Observer Pattern** - Event-driven communication
-- **Singleton Pattern** - Shared resources (use sparingly)ess rules, domain logic, service orchestration
+- **Singleton Pattern** - Shared resources (use sparingly)
+
+## SOLID Principles
+
+All code in modu-core MUST adhere to SOLID principles to ensure maintainability, scalability, and flexibility.
+
+### S - Single Responsibility Principle (SRP)
+- **Definition:** A class or module should have ONE and only ONE reason to change
+- **In modu-core:** Each module has a single, well-defined responsibility
+- **Examples:**
+  - UserService handles user logic only
+  - UserRepository handles data access only
+  - UserValidator handles validation only
+
+### O - Open/Closed Principle (OCP)
+- **Definition:** Software should be open for extension but closed for modification
+- **In modu-core:** Use interfaces and abstract classes to allow extension without changing existing code
+- **Examples:**
+  - New data providers can be added without modifying existing code
+  - New service implementations can be plugged in via dependency injection
+  - Use strategy pattern for pluggable algorithms
+
+### L - Liskov Substitution Principle (LSP)
+- **Definition:** Subtypes must be substitutable for their base types
+- **In modu-core:** Derived classes must fully honor the contracts of their base interfaces
+- **Examples:**
+  - Any IRepository implementation must work as a drop-in replacement
+  - Any IService can be replaced with another implementation without breaking functionality
+
+### I - Interface Segregation Principle (ISP)
+- **Definition:** Clients should not depend on interfaces they don't use
+- **In modu-core:** Create specific, focused interfaces instead of fat interfaces
+- **Examples:**
+  - Don't create one massive IUser interface
+  - Instead, create: IUserReader, IUserWriter, IUserValidator
+  - Client code uses only the interfaces it needs
+
+### D - Dependency Inversion Principle (DIP)
+- **Definition:** Depend on abstractions, not concrete implementations
+- **In modu-core:** Always inject dependencies through constructor or setter
+- **Examples:**
+  - Services depend on IRepository, not ConcreteRepository
+  - Controllers depend on IService, not ConcreteService
+  - Use dependency injection container for managing dependencies
+
+### SOLID Checklist
+Before committing code, verify:
+- ✓ Does each class have a single, well-defined responsibility?
+- ✓ Can this code be extended without modification?
+- ✓ Are substitutions between implementations safe?
+- ✓ Does the interface contain only necessary methods?
+- ✓ Are dependencies injected, not created internally?
+
+### Benefits in modu-core
+- **Maintainability** - Changes to one module don't affect others
+- **Testability** - Dependencies can be mocked for unit testing
+- **Reusability** - Modules can be used in different contexts
+- **Flexibility** - Easy to swap implementations
+- **Scalability** - New features can be added without rewriting existing codeess rules, domain logic, service orchestration
 - Tests: Unit tests for services, integration tests with repositories
 
 ### Module 3 - Data Access
