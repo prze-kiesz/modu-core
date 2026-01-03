@@ -52,7 +52,7 @@ std::string GetSignalName(int signal) {
 }
 }  // namespace
 
-namespace drv {
+namespace comm {
 
 void Terminate::WaitForTerminateSignal() {
   try {
@@ -79,8 +79,10 @@ void Terminate::WaitForTerminateSignal() {
     int received = sigwait(&m_waited_signals, &signal);
     sd_notify(0, "STOPPING=1");
 
-    LOG(INFO) << "The office daemon has been successfully shut down. Signal " << received << " signal " << signal;
     m_terminate_reason = GetSignalName(signal);
+    LOG(INFO) << "The office daemon has been successfully shut down. Signal " << received << " signal " << signal << " name "
+              << m_terminate_reason;
+
   } catch (std::exception& l_exception) {
     sd_notifyf(0, "STATUS=Failed to start up: %s\n",  // NOLINT(cppcoreguidelines-pro-type-vararg) NOLINT(hicpp-vararg)
                l_exception.what());
@@ -92,8 +94,11 @@ void Terminate::WaitForTerminateSignal() {
 Terminate::Terminate() : m_terminate{0}, m_wait_ms{0}, m_waited_signals{} {
   sigemptyset(&m_waited_signals);
   // add list of signals which are handled in this module
-  sigaddset(&m_waited_signals, SIGTERM);
-  sigaddset(&m_waited_signals, SIGQUIT);
+  sigaddset(&m_waited_signals, SIGINT);   // Ctrl-C (graceful)
+  sigaddset(&m_waited_signals, SIGTERM);  // systemd/kill (graceful)
+  sigaddset(&m_waited_signals, SIGQUIT);  // Ctrl-\ (graceful)
+
+  // TODO: in future sigaddset(&m_waited_signals, SIGHUP);   // reload config (optional)
 };
 
 Terminate::~Terminate() {
@@ -136,4 +141,4 @@ void Terminate::TerminateApp(uint32_t milis_to_wait) {
   pthread_kill(m_signal_wait->native_handle(), SIGTERM);
 }
 
-}  // namespace drv
+}  // namespace comm
