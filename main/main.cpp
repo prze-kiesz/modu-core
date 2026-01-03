@@ -20,8 +20,9 @@ int main(const int argc, const char *argv[]) {
   // Initialize all layers starting from the lowest one.
   
   auto ret_code = comm::Main::Init(argc, argv);
-  if (ret_code != comm::OK) {
-    LOG(ERROR) << "initConfig error " << ret_code;
+  if (ret_code != comm::code_t::OK) {
+    LOG(ERROR) << "Initialization failed with error code: " << static_cast<int>(ret_code);
+    return 1;
   }
       
   // wait for program termination signal

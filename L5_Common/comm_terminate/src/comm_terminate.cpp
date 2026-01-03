@@ -121,7 +121,7 @@ Terminate::~Terminate() {
 }
 
 code_t Terminate::Start() {
-  code_t ret_code = OK;
+  code_t ret_code = code_t::OK;
 
   // Block signals in main thread so they are only delivered to the dedicated worker thread
   // Worker thread inherits this mask and uses sigwait() to receive signals synchronously

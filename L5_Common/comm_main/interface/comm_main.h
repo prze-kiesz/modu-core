@@ -3,33 +3,36 @@
 
 /**
  * @file comm_main.h
- * @brief Main file for Drivers layer startup, initialization and work
- *
- *
+ * @brief Common layer initialization and startup orchestration
+ * @details Coordinates initialization of all L5_Common modules (terminate, logging, etc.)
  */
 #pragma once
 
 namespace comm {
 
 /**
- * @brief Enum with commonly used return code values in the project
+ * @brief Status codes for initialization and operation results
+ * @note Using enum class for type safety (C++11)
  */
-typedef enum {
-  OK,
-  ERROR,
-  EXCEPTION_THROWN,
-} code_t;
+enum class code_t {
+  OK,                 ///< Operation completed successfully
+  ERROR,              ///< Generic error occurred
+  EXCEPTION_THROWN,   ///< Exception was thrown during operation
+};
 
 class Main {
  private:
+  /**
+   * @brief Private constructor for singleton pattern
+   * @note Default constructor - no initialization needed in constructor
+   */
   Main();
 
  public:
   /**
-   * @brief Returns instance of Main class singleton
-   * see: Meyers' Singleton in C++
-   *
-   * @return Main& instance of Config
+   * @brief Returns singleton instance of Main class
+   * @details Thread-safe initialization using Meyers' Singleton pattern
+   * @return Reference to the single Main instance
    */
   static Main& Instance() {
     static Main instance;
@@ -37,13 +40,14 @@ class Main {
   }
 
   /**
-   * @brief Function should be called to initialize porting layer modules
-   *
-   * @param argc
-   * @param argv
-   * @return code_t
+   * @brief Initialize all Common layer (L5) modules
+   * @details Starts termination handler and prepares common infrastructure
+   * @param argc Command-line argument count (reserved for future use)
+   * @param argv Command-line argument values (reserved for future use)
+   * @return code_t::OK on success, code_t::ERROR on failure
+   * @note Currently argc/argv are unused but reserved for future configuration
    */
   static code_t Init(int argc, const char* argv[]);
 };
 
-}  // namespace drv
+}  // namespace comm
