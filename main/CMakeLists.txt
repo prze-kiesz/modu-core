@@ -7,5 +7,4 @@ add_executable(${CMAKE_PROJECT_NAME} main.cpp)
 
 find_package("comm_main" REQUIRED)
 find_package("comm_terminate" REQUIRED)
-find_package("comm_os" REQUIRED)
 

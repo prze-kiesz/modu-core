@@ -9,9 +9,16 @@
  */
 #pragma once
 
-#include "comm_os.h"
-
 namespace drv {
+
+/**
+ * @brief Enum with commonly used return code values in the project
+ */
+typedef enum {
+  OK,
+  ERROR,
+  EXCEPTION_THROWN,
+} code_t;
 
 class Main {
  private:

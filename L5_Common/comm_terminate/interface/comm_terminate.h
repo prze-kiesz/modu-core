@@ -4,14 +4,53 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <csignal>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
-#include "comm_os.h"
-
 namespace drv {
+
+/**
+ * @brief Enum with commonly used return code values in the project
+ */
+typedef enum {
+  OK,
+  ERROR,
+  EXCEPTION_THROWN,
+} code_t;
+
+/**
+ * @brief Implementation of semaphore class for resources waiting
+ */
+class Semaphore {
+ public:
+  explicit Semaphore(int counter) : m_counter(counter) {}
+
+  Semaphore(const Semaphore&) = delete;
+  Semaphore& operator=(const Semaphore&) = delete;
+
+  void Signal() {
+    std::unique_lock<std::mutex> lock(m_mtx);
+    m_counter++;
+    m_resource_available.notify_one();
+  }
+
+  void Wait() {
+    std::unique_lock<std::mutex> lock(m_mtx);
+    while (m_counter == 0) {
+      m_resource_available.wait(lock);
+    }
+    m_counter--;
+  }
+
+ private:
+  std::mutex m_mtx;
+  std::condition_variable m_resource_available;
+  int m_counter;
+};
 
 class Terminate {
  private:

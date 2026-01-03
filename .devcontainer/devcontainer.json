@@ -3,6 +3,9 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/config,target=/home/ubuntu/.ssh/config,type=bind,readonly"
+    ],
     "remoteEnv": {
         "EULA": "1"
     },
