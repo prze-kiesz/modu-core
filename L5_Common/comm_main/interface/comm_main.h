@@ -9,7 +9,7 @@
  */
 #pragma once
 
-namespace drv {
+namespace comm {
 
 /**
  * @brief Enum with commonly used return code values in the project

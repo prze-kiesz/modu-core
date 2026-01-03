@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <glog/logging.h>
+#include "comm_main.h"
+#include "comm_terminate.h"
 
 int main(const int argc, const char *argv[]) {
 
@@ -14,5 +16,19 @@ int main(const int argc, const char *argv[]) {
   google::InstallFailureSignalHandler();
   
   LOG(INFO) << "Starting application with " << argc << " arguments.";
+
+  // Initialize all layers starting from the lowest one.
+  
+  auto ret_code = comm::Main::Init(argc, argv);
+  if (ret_code != comm::OK) {
+    LOG(ERROR) << "initConfig error " << ret_code;
+  }
+      
+  // wait for program termination signal
+  LOG(INFO) << " Waiting for thread termination";
+  auto term_reason = comm::Terminate::Instance().WaitForTermination();
+
+  LOG(INFO) << "Grpc server is shouting down, reason: " << term_reason;
+
   return 0;
 }

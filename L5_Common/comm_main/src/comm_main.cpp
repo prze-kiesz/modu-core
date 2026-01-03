@@ -3,11 +3,10 @@
 
 #include "comm_main.h"
 
-//#include <glog/logging.h>
+#include <glog/logging.h>
+#include "comm_terminate.h"
 
-// #include "comm_terminate.h"
-
-namespace drv {
+namespace comm {
 
 Main::Main() = default;
 
@@ -21,13 +20,13 @@ code_t Main::Init(int  /*argc*/, const char*  /*argv*/[]) { // NOLINT
   //     LOG(ERROR) << "Problem with initialization of 'Config::instance().init(argc, argv)': " << ret_code;
   //   }
 
-  // ret_code = Terminate::Instance().Start();
-  // if (ret_code != OK) {
-  //   LOG(ERROR) << "Problem with starting: Terminate::instance().start()': " << ret_code;
-  // }
+  ret_code = Terminate::Instance().Start();
+  if (ret_code != OK) {
+    LOG(ERROR) << "Problem with starting: Terminate::instance().start()': " << ret_code;
+  }
 
   //
   return ret_code;
 }
 
-}  // namespace drv
+}  // namespace comm
