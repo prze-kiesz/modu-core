@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 // SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
-#include <iostream>
 #include <glog/logging.h>
 #include "comm_main.h"
 #include "comm_terminate.h"
@@ -15,7 +14,7 @@ int main(const int argc, const char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
   
-  LOG(INFO) << "Starting application with " << argc << " arguments.";
+  LOG(INFO) << "Starting application";
 
   // Initialize all layers starting from the lowest one.
   
@@ -25,11 +24,14 @@ int main(const int argc, const char *argv[]) {
     return 1;
   }
       
-  // wait for program termination signal
-  LOG(INFO) << " Waiting for thread termination";
+  // wait for application termination signal
+  LOG(INFO) << "Waiting for application termination";
   auto term_reason = comm::Terminate::Instance().WaitForTermination();
 
-  LOG(INFO) << "Grpc server is shouting down, reason: " << term_reason;
+  LOG(INFO) << "Application is shutting down, reason: " << term_reason;
+
+  // Shutdown Google's logging library
+  google::ShutdownGoogleLogging();
 
   return 0;
 }
