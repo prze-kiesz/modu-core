@@ -1,10 +1,10 @@
 {
-    "name": "Linux devconatiner",
+    "name": "Linux devcontainer",
     "build": {
         "dockerfile": "Dockerfile"
     },
     "mounts": [
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/config,target=/home/ubuntu/.ssh/config,type=bind,readonly"
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind,readonly"
     ],
     "remoteEnv": {
         "EULA": "1"
@@ -15,13 +15,14 @@
                 "ms-vscode.cpptools-extension-pack",
                 "ms-vscode.cmake-tools",
                 "ms-azuretools.vscode-docker",
-                "zxh404.vscode-proto3",                    // Protobuf .proto support
+                "bufbuild.vscode-buf",                     // Protobuf .proto support
                 "ms-vscode.makefile-tools",                // Makefile support
                 "twxs.cmake",                              // Syntax highlighting for CMake
                 "llvm-vs-code-extensions.vscode-clangd",   // Clangd (C++ indexer)
                 "github.copilot",                          // GitHub Copilot
                 "github.copilot-chat",                     // GitHub Copilot Chat 
                 "ms-vscode.remote-ssh"                     // Remote SSH 
+            ]
         }
     }
 }
