@@ -1,3 +1,10 @@
+#directory 
+build/
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt  
+.cache/
+
 # Prerequisites
 *.d
 

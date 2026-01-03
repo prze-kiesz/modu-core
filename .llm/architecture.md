@@ -46,8 +46,8 @@ modu-core/
 │   ├── http_server/             # Module example
 │   │   ├── interface/
 │   │   ├── src/
-│   │   ├── utest/
-│   │   ├── itest/
+│   │   ├── unit_test/
+│   │   ├── integration_test/
 │   │   ├── doc/
 │   │   ├── http_server-config.cmake
 │   │   └── CMakeLists.txt
@@ -58,8 +58,8 @@ modu-core/
 │   ├── user_service/            # Module example
 │   │   ├── interface/
 │   │   ├── src/
-│   │   ├── utest/
-│   │   ├── itest/
+│   │   ├── unit_test/
+│   │   ├── integration_test/
 │   │   ├── doc/
 │   │   ├── user_service-config.cmake
 │   │   └── CMakeLists.txt
@@ -70,8 +70,8 @@ modu-core/
 │   ├── user_repository/         # Module example
 │   │   ├── interface/
 │   │   ├── src/
-│   │   ├── utest/
-│   │   ├── itest/
+│   │   ├── unit_test/
+│   │   ├── integration_test/
 │   │   ├── doc/
 │   │   ├── user_repository-config.cmake
 │   │   └── CMakeLists.txt
@@ -82,8 +82,8 @@ modu-core/
 │   ├── logger/                  # Module example
 │   │   ├── interface/
 │   │   ├── src/
-│   │   ├── utest/
-│   │   ├── itest/
+│   │   ├── unit_test/
+│   │   ├── integration_test/
 │   │   ├── doc/
 │   │   ├── logger-config.cmake
 │   │   └── CMakeLists.txt
@@ -94,8 +94,8 @@ modu-core/
 │   ├── string_utils/            # Module example
 │   │   ├── interface/
 │   │   ├── src/
-│   │   ├── utest/
-│   │   ├── itest/
+│   │   ├── unit_test/
+│   │   ├── integration_test/
 │   │   ├── doc/
 │   │   ├── string_utils-config.cmake
 │   │   └── CMakeLists.txt
@@ -261,10 +261,10 @@ module_name/
 ├── src/                    # Implementation files
 │   ├── *.cpp              # C++ implementation files
 │   └── *.h                # Internal header files (used only within this module)
-├── utest/                 # Unit tests (test individual functions)
+├── unit_test/             # Unit tests (test individual functions)
 │   ├── CMakeLists.txt
 │   └── test_*.cpp         # Unit test files
-├── itest/                 # Integration tests (test module interactions)
+├── integration_test/       # Integration tests (test module interactions)
 │   ├── CMakeLists.txt
 │   └── test_*.cpp         # Integration test files
 ├── doc/                   # Module documentation
@@ -287,13 +287,13 @@ module_name/
   - Internal headers only used within this module
   - Should NOT be used directly by other modules
 
-- **utest/** - Unit tests
+- **unit_test/** - Unit tests
   - Test individual functions and methods in isolation
   - Mock external dependencies
   - Achieve minimum 80% code coverage per module
   - Test both happy paths and error scenarios
 
-- **itest/** - Integration tests
+- **integration_test/** - Integration tests
   - Test interactions between modules
   - Verify data flow across layers
   - Test API contracts between modules
@@ -345,11 +345,11 @@ Every module MUST implement comprehensive tests.
 ### Test Organization
 ```
 module/
-├── utest/
+├── unit_test/
 │   ├── test_component1.cpp
 │   ├── test_component2.cpp
 │   └── CMakeLists.txt
-├── itest/
+├── integration_test/
 │   ├── test_module_integration.cpp
 │   └── CMakeLists.txt
 └── ...
