@@ -4,7 +4,10 @@
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)
 
 
-
+# L5 layer modules
 find_package("comm_main" REQUIRED)
 find_package("comm_terminate" REQUIRED)
+
+# L4 layer modules
+find_package("infr_main" REQUIRED)
 

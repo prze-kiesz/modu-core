@@ -61,6 +61,27 @@ std::string GetSignalName(int signal) {
 
 namespace comm {
 
+// Error category implementation
+std::string TerminateErrorCategory::message(int ev) const {
+  switch (static_cast<TerminateError>(ev)) {
+    case TerminateError::Success:
+      return "Success";
+    case TerminateError::SignalMaskFailed:
+      return "Failed to block signals with sigprocmask()";
+    case TerminateError::ThreadCreationFailed:
+      return "Failed to create signal handler thread";
+    case TerminateError::SignalWaitFailed:
+      return "Signal wait operation failed";
+    default:
+      return "Unknown terminate error";
+  }
+}
+
+const std::error_category& get_terminate_error_category() noexcept {
+  static TerminateErrorCategory instance;
+  return instance;
+}
+
 void Terminate::WaitForTerminateSignal() {
   try {
     // Signal mask (SIGINT, SIGTERM, SIGQUIT) is inherited from main thread via Start()
@@ -120,18 +141,25 @@ Terminate::~Terminate() {
   // Note: As a singleton, this destructor is only called at program exit
 }
 
-code_t Terminate::Start() {
-  code_t ret_code = code_t::OK;
-
+std::error_code Terminate::Start() {
   // Block signals in main thread so they are only delivered to the dedicated worker thread
   // Worker thread inherits this mask and uses sigwait() to receive signals synchronously
   // Note: Must be called from main thread before spawning worker thread
-  sigprocmask(SIG_BLOCK, &m_waited_signals, nullptr);  // NOLINT(concurrency-mt-unsafe)
+  int result = sigprocmask(SIG_BLOCK, &m_waited_signals, nullptr);  // NOLINT(concurrency-mt-unsafe)
+  if (result != 0) {
+    LOG(ERROR) << "sigprocmask() failed with error code: " << result;
+    return make_error_code(TerminateError::SignalMaskFailed);
+  }
 
   // Spawn dedicated thread to handle termination signals
-  m_signal_wait = std::make_unique<std::thread>(&Terminate::WaitForTerminateSignal, this);
+  try {
+    m_signal_wait = std::make_unique<std::thread>(&Terminate::WaitForTerminateSignal, this);
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Failed to create signal handler thread: " << e.what();
+    return make_error_code(TerminateError::ThreadCreationFailed);
+  }
 
-  return ret_code;
+  return {};  // Success - empty error_code
 }
 
 std::string Terminate::WaitForTermination() {

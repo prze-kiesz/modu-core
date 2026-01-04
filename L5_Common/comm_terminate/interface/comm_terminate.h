@@ -7,11 +7,41 @@
 #include <memory>
 #include <semaphore>
 #include <string>
+#include <system_error>
 #include <thread>
 
-#include "comm_main.h"
-
 namespace comm {
+
+/**
+ * @brief Error codes for Terminate module operations
+ */
+enum class TerminateError {
+  Success = 0,              ///< Operation completed successfully
+  SignalMaskFailed = 1,     ///< Failed to block signals with sigprocmask()
+  ThreadCreationFailed = 2, ///< Failed to create signal handler thread
+  SignalWaitFailed = 3,     ///< sigwait() failed to receive signal
+};
+
+/**
+ * @brief Error category for Terminate module errors
+ */
+class TerminateErrorCategory : public std::error_category {
+ public:
+  const char* name() const noexcept override { return "comm_terminate"; }
+  std::string message(int ev) const override;
+};
+
+/**
+ * @brief Get the singleton instance of TerminateErrorCategory
+ */
+const std::error_category& get_terminate_error_category() noexcept;
+
+/**
+ * @brief Helper function to create std::error_code from TerminateError
+ */
+inline std::error_code make_error_code(TerminateError e) noexcept {
+  return {static_cast<int>(e), get_terminate_error_category()};
+}
 
 class Terminate {
  private:
@@ -60,10 +90,10 @@ class Terminate {
   /**
    * @brief Starts the termination handler by blocking signals and spawning worker thread
    * @details Blocks SIGINT/SIGTERM/SIGQUIT in main thread and creates dedicated signal handler thread
-   * @return code_t Status code (currently always returns OK)
+   * @return std::error_code - empty on success, error code on failure
    * @note Must be called before WaitForTermination()
    */
-  code_t Start();
+  std::error_code Start();
 
   /**
    * @brief Programmatically triggers application termination (alternative to external signals)

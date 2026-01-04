@@ -2,17 +2,16 @@
 // SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
 /**
- * @file comm_main.cpp
- * @brief Implementation of Common layer initialization orchestrator
- * @details Coordinates startup of shared infrastructure modules (logging, signals, etc.)
+ * @file infr_main.cpp
+ * @brief Implementation of Infrastructure layer initialization orchestrator
+ * @details Coordinates startup of low-level infrastructure modules
  */
 
-#include "comm_main.h"
+#include "infr_main.h"
 
 #include <glog/logging.h>
-#include "comm_terminate.h"
 
-namespace comm {
+namespace infr {
 
 // Error category implementation
 std::string InitErrorCategory::message(int ev) const {
@@ -38,25 +37,18 @@ Main::Main() = default;
 
 std::error_code Main::Init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   // TODO: Future expansion - use argc/argv for configuration file path or command-line options
-  // TODO: Add Config module initialization when implemented
+  // TODO: Add infrastructure layer modules initialization when implemented
 
-  // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT)
-  auto ret_code = Terminate::Instance().Start();
-  if (ret_code) {
-    LOG(ERROR) << "Failed to start Terminate::Instance().Start(): " << ret_code.message();
-    return ret_code;
-  }
-
-  LOG(INFO) << "Common layer (L5) initialization completed successfully";
+  LOG(INFO) << "Infrastructure layer (L4) initialization completed successfully";
   return {};  // Success - empty error_code
 }
 
 std::error_code Main::Deinit() {
-  // TODO: Add deinitialization logic for Common layer modules when needed
-  // Currently no cleanup is required as Terminate is handled by WaitForTermination()
+  // TODO: Add deinitialization logic for Infrastructure layer modules when implemented
+  // This is where network connections, message queues, and hardware resources should be released
   
-  LOG(INFO) << "Common layer (L5) deinitialization completed successfully";
+  LOG(INFO) << "Infrastructure layer (L4) deinitialization completed successfully";
   return {};  // Success - empty error_code
 }
 
-}  // namespace comm
+}  // namespace infr

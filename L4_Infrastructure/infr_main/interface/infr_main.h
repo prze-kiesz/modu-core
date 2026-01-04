@@ -2,18 +2,18 @@
 // SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
 /**
- * @file comm_main.h
- * @brief Common layer initialization and startup orchestration
- * @details Coordinates initialization of all L5_Common modules (terminate, logging, etc.)
+ * @file infr_main.h
+ * @brief Infrastructure layer initialization and startup orchestration
+ * @details Coordinates initialization of all L4_Infrastructure modules
  */
 #pragma once
 
 #include <system_error>
 
-namespace comm {
+namespace infr {
 
 /**
- * @brief Error codes for Common layer initialization
+ * @brief Error codes for Infrastructure layer initialization
  */
 enum class InitError {
   Success = 0,              ///< Operation completed successfully
@@ -22,11 +22,11 @@ enum class InitError {
 };
 
 /**
- * @brief Error category for Common layer initialization errors
+ * @brief Error category for Infrastructure layer initialization errors
  */
 class InitErrorCategory : public std::error_category {
  public:
-  const char* name() const noexcept override { return "comm_init"; }
+  const char* name() const noexcept override { return "infr_init"; }
   std::string message(int ev) const override;
 };
 
@@ -62,8 +62,8 @@ class Main {
   }
 
   /**
-   * @brief Initialize all Common layer (L5) modules
-   * @details Starts termination handler and prepares common infrastructure
+   * @brief Initialize all Infrastructure layer (L4) modules
+   * @details Starts low-level infrastructure (networking, messaging, hardware access)
    * @param argc Command-line argument count (reserved for future use)
    * @param argv Command-line argument values (reserved for future use)
    * @return std::error_code - empty on success, error code on failure
@@ -72,10 +72,10 @@ class Main {
   static std::error_code Init(int argc, const char* argv[]);
 
   /**
-   * @brief Deinitialize all Common layer (L5) modules
-   * @details Performs graceful shutdown of common infrastructure
+   * @brief Deinitialize all Infrastructure layer (L4) modules
+   * @details Performs graceful shutdown of infrastructure components
    * @return std::error_code - empty on success, error code on failure
-   * @note Should be called last, after all higher layers are deinitialized
+   * @note Should be called before Common layer (L5) deinitialization
    */
   static std::error_code Deinit();
 
@@ -84,4 +84,4 @@ class Main {
   Main& operator=(const Main&) = delete;
 };
 
-}  // namespace comm
+}  // namespace infr
