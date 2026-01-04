@@ -11,6 +11,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(BUILD_TESTING ON)
 
+# Enable CTest
+enable_testing()
+
 # add ccache to spuedup compilation
 find_program(CCACHE "ccache")
 

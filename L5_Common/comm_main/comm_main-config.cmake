@@ -2,59 +2,39 @@
 # SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
 ###############
-# define library name
+# comm_main-config.cmake
+# Configuration file for integrating comm_main module with the project
+# This file is called by find_package(comm_main)
+###############
+
+###############
+# Define module name
 #
 set(CURRENT_LIB_NAME "comm_main")
-set(CURRENT_TARGET "${PROJECT_NAME}-${CURRENT_LIB_NAME}")
 
-
-# avoid multiple instalation
-if (TARGET ${CURRENT_TARGET})
+# Prevent multiple inclusion
+if (TARGET ${PROJECT_NAME}-${CURRENT_LIB_NAME})
     return()
 endif()
 
-message(STATUS "Configure library ${CURRENT_LIB_NAME}")
+message(STATUS "Configuring module: ${CURRENT_LIB_NAME}")
 
-if(GRPC_INTEGRATE_CUCMBER_TEST)
-    add_compile_definitions(GRPC_INTEGRATE_CUCMBER_TEST)
-endif()
+###############
+# Build the module using its CMakeLists.txt
+#
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${CURRENT_LIB_NAME})
 
-################
-# list of private include paths for module
-# will be used in module compilation and in unit tests compilation
-set(CURRENT_PRIVATE_INCLUDE_DIR
-    ${CMAKE_CURRENT_LIST_DIR}/src
-)
-
-################
-# list of source files for module
-# will be used in module compilation and in unit tests compilation
-set(CURRENT_SOURCES_LIST
-    ${CMAKE_CURRENT_LIST_DIR}/src/comm_main.cpp
-)
-
-
-# always build the library
-add_library(${CURRENT_TARGET} OBJECT
-        ${CURRENT_SOURCES_LIST}
-)
-
-# include directories required for module compilation
-target_include_directories(${CURRENT_TARGET}
-    PUBLIC ${CMAKE_CURRENT_LIST_DIR}
-    PRIVATE ${CURRENT_PRIVATE_INCLUDE_DIR}
-    PRIVATE $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-# link locally all found dependednd modules
-target_link_libraries(${CURRENT_TARGET} LINK_PRIVATE)
-
-# export interface directory to module
-# - only directory accessible from other modules
+###############
+# Export interface to main project
+# Makes comm_main headers accessible to other modules
+#
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/interface>
-    $<INSTALL_INTERFACE:interface>
+    $<INSTALL_INTERFACE:include>
 )
 
-# link module library to project
-target_link_libraries(${PROJECT_NAME} ${CURRENT_TARGET})
+###############
+# Link module to main project
+#
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-${CURRENT_LIB_NAME})
+
