@@ -155,9 +155,6 @@ CheckOptions:
 # Header filter for checks to be applied
 HeaderFilterRegex: '.*'
 
-# Warnings to disable
-AnalyzeTemporaryDtors: true
-
 # Fix options
 FixOptions:
   ClangTidyModule: 'clang-tidy'
