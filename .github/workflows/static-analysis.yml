@@ -177,9 +177,12 @@ jobs:
           
           # Save results for summary
           if [ -n "$NEEDS_FORMAT" ]; then
-            echo -e "$NEEDS_FORMAT" > clang-format-issues.txt
+            echo "The following files need formatting:" > clang-format-issues.txt
+            printf "$NEEDS_FORMAT" >> clang-format-issues.txt
+            echo "" >> clang-format-issues.txt
+            echo "Run 'clang-format -i <file>' to fix formatting" >> clang-format-issues.txt
             echo "::warning::The following files need formatting:"
-            echo -e "$NEEDS_FORMAT"
+            printf "$NEEDS_FORMAT"
             echo "Run 'clang-format -i <file>' to fix formatting"
           else
             echo "All files are properly formatted" > clang-format-issues.txt
