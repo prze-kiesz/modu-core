@@ -96,7 +96,6 @@ jobs:
             --std=c++20 \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
-            --suppress=missingInclude \
             --inline-suppr \
             --xml \
             --xml-version=2 \
@@ -125,7 +124,6 @@ jobs:
             --std=c++20 \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
-            --suppress=missingInclude \
             --inline-suppr \
             -I L5_Common/comm_main/interface \
             -I L5_Common/comm_terminate/interface \
