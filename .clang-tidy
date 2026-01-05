@@ -154,7 +154,3 @@ CheckOptions:
 
 # Header filter for checks to be applied
 HeaderFilterRegex: '.*'
-
-# Fix options
-FixOptions:
-  ClangTidyModule: 'clang-tidy'
