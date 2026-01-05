@@ -158,9 +158,9 @@ jobs:
 
       - name: Check code formatting
         run: |
-          # Find all C++ source files
+          # Find all C++ source and header files
           FILES=$(find L5_Common L4_Infrastructure main \
-            -name '*.cpp' -o -name '*.h' -o -name '*.hpp' 2>/dev/null || true)
+            \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) 2>/dev/null || true)
           
           if [ -z "$FILES" ]; then
             echo "No C++ files found to check"
