@@ -51,15 +51,9 @@ jobs:
       - name: Run clang-tidy
         run: |
           cd build
-          # Run clang-tidy on all .cpp files in compile_commands.json
-          run-clang-tidy-19 -p . -quiet 2>&1 | tee clang-tidy-report.txt || true
-          
-          # Run clang-tidy on header files (not in compile_commands.json)
-          echo "" >> clang-tidy-report.txt
-          echo "=== Header files analysis ===" >> clang-tidy-report.txt
-          find ../L5_Common ../L4_Infrastructure ../main \
-            \( -name '*.h' -o -name '*.hpp' \) -type f | \
-            xargs -I {} clang-tidy -p . {} 2>&1 | tee -a clang-tidy-report.txt || true
+          # Run clang-tidy on all files in compile_commands.json
+          # -header-filter=.* enables checking all non-system headers
+          run-clang-tidy-19 -p . -header-filter='.*' -quiet 2>&1 | tee clang-tidy-report.txt || true
           
           # Check if there are any errors (not warnings)
           if grep -q "error:" clang-tidy-report.txt; then
