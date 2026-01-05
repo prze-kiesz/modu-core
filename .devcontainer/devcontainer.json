@@ -1,7 +1,15 @@
 {
     "name": "Linux devcontainer",
+    // Use prebuilt image from GitHub Container Registry (faster) or build locally
+    // To use prebuilt image, uncomment the "image" line and comment out "build" section
+    // "image": "ghcr.io/prze-kiesz/modu-core:latest",
     "build": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Dockerfile",
+        "args": {
+            "VERSION": "1.0.0",
+            "BUILD_DATE": "${localEnv:BUILD_DATE}",
+            "VCS_REF": "${localEnv:VCS_REF}"
+        }
     },
     "mounts": [
         "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind,readonly"

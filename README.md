@@ -112,6 +112,34 @@ modu-core/
 
 ## Building the Project
 
+### Development Container
+
+The project includes a pre-configured development container with all dependencies installed. You can use:
+
+**Option 1: Prebuilt Docker Image (Recommended)**
+```bash
+# Pull the latest development container image
+docker pull ghcr.io/prze-kiesz/modu-core:latest
+
+# Or use it directly in VS Code by uncommenting the "image" line in .devcontainer/devcontainer.json
+```
+
+**Option 2: Build Locally**
+```bash
+# Build the development container from Dockerfile
+cd .devcontainer
+docker build -t modu-core-dev .
+```
+
+The container includes:
+- Ubuntu 24.04 LTS
+- CMake, Make, GCC, Clang-19
+- Google Test (gtest + gmock) 1.16.0
+- Google glog 0.6.0
+- systemd development libraries
+- Cross-compilation tools (ARM64)
+- Development tools (ccache, clang-tidy, clang-format, clangd)
+
 ### Prerequisites
 
 ```bash
@@ -172,12 +200,27 @@ The project uses **GitHub Actions** for continuous integration and deployment:
 
 ### Automated Workflows
 
-- ✅ **Build Verification**: Compile on every push and pull request
-- ✅ **Unit Tests**: Run all tests and report results
+- ✅ **Docker Image Build**: Automatically build and publish development container to GitHub Container Registry
+  - Triggered on changes to `.devcontainer/Dockerfile`
+  - Tagged with `latest`, branch name, PR number, and git SHA
+  - Published to `ghcr.io/prze-kiesz/modu-core`
+  - Semantic versioning on releases
+- ✅ **Build Verification**: Compile on every push and pull request (planned)
+- ✅ **Unit Tests**: Run all tests and report results (planned)
 - ✅ **Code Quality**: Static analysis and linting (planned)
 - ✅ **Coverage Reports**: Track test coverage trends (planned)
 - 📦 **Package Creation**: Build `.deb` and `.rpm` packages (planned)
 - 🚀 **Release Automation**: Automatic versioning and release creation (planned)
+
+### Using the Prebuilt Development Container
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/prze-kiesz/modu-core:latest
+
+# Run with VS Code Remote Containers extension
+# Or update .devcontainer/devcontainer.json to use prebuilt image
+```
 
 See `.github/workflows/` for workflow definitions.
 
@@ -299,6 +342,7 @@ See [LICENSE](LICENSE) file for details.
 - ✅ systemd integration
 
 ### Planned Features
+- ✅ **Docker development container with automated builds**
 - 🔄 Complete CI/CD pipeline with GitHub Actions
 - 🔄 Automated package generation (deb/rpm)
 - 🔄 Code coverage reporting

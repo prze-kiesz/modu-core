@@ -1,12 +1,30 @@
 # Base image: Latest Ubuntu LTS (24.04)
 FROM ubuntu:24.04
 
+# Build arguments for versioning
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=1.0.0
+
 ENV TERM=xterm-color
 ENV DEBIAN_FRONTEND=noninteractive
 
-LABEL maintainer="przemyslaw.kieszkowski@fluke.com"
-LABEL version="0.4"
-LABEL description="Linux build environment with grpc, x64 & ARM64"
+# OCI labels for container metadata
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+LABEL org.opencontainers.image.authors="Przemek Kieszkowski <przemek.kieszkowski@gmail.com>"
+LABEL org.opencontainers.image.url="https://github.com/prze-kiesz/modu-core"
+LABEL org.opencontainers.image.documentation="https://github.com/prze-kiesz/modu-core/blob/main/README.md"
+LABEL org.opencontainers.image.source="https://github.com/prze-kiesz/modu-core"
+LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+LABEL org.opencontainers.image.vendor="Przemek Kieszkowski"
+LABEL org.opencontainers.image.title="modu-core Development Container"
+LABEL org.opencontainers.image.description="Linux build environment with C++20, CMake, glog, GoogleTest, clang-19"
+
+# Legacy labels for compatibility
+LABEL maintainer="przemek.kieszkowski@gmail.com"
+LABEL version="${VERSION}"
+LABEL description="Linux build environment with C++20, CMake, glog, GoogleTest, clang-19"
 
 # Update and install basic build tools and dependencies
 RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
