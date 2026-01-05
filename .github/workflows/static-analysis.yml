@@ -51,15 +51,12 @@ jobs:
       - name: Run clang-tidy
         run: |
           cd build
-          # Find all C++ source files and run clang-tidy on them
-          find ../L5_Common ../L4_Infrastructure ../main \
-            -name '*.cpp' -o -name '*.h' | \
-            xargs clang-tidy -p . --warnings-as-errors='' 2>&1 | tee clang-tidy-report.txt
+          # Run clang-tidy on all files in compile_commands.json
+          run-clang-tidy-19 -p . -quiet 2>&1 | tee clang-tidy-report.txt || true
           
-          # Check if there are any warnings/errors
-          if grep -q "warning:\|error:" clang-tidy-report.txt; then
-            echo "::warning::clang-tidy found issues"
-            exit 0  # Don't fail the build, just warn
+          # Check if there are any errors (not warnings)
+          if grep -q "error:" clang-tidy-report.txt; then
+            echo "::warning::clang-tidy found errors"
           fi
 
       - name: Upload clang-tidy report
@@ -69,6 +66,20 @@ jobs:
           name: clang-tidy-report
           path: build/clang-tidy-report.txt
           retention-days: 30
+
+      - name: Generate clang-tidy summary
+        if: always()
+        run: |
+          cd build
+          echo "## Clang-Tidy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f clang-tidy-report.txt ]; then
+            # Show last 100 lines of report (most relevant issues)
+            tail -100 clang-tidy-report.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No clang-tidy report generated" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   cppcheck:
     runs-on: ubuntu-latest
