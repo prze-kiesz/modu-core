@@ -39,7 +39,17 @@ echo ""
 
 # Run clang-tidy using run-clang-tidy tool (comes with LLVM)
 # This automatically uses compile_commands.json
+echo -e "${YELLOW}Analyzing .cpp files...${NC}"
 run-clang-tidy-19 -p "${BUILD_DIR}" -quiet
+
+# Run clang-tidy on header files (not in compile_commands.json)
+echo ""
+echo -e "${YELLOW}Analyzing header files...${NC}"
+find "${PROJECT_ROOT}/L5_Common" \
+     "${PROJECT_ROOT}/L4_Infrastructure" \
+     "${PROJECT_ROOT}/main" \
+     \( -name "*.h" -o -name "*.hpp" \) -type f | \
+     xargs -I {} clang-tidy-19 -p "${BUILD_DIR}" {} 2>&1 || true
 
 echo ""
 echo -e "${GREEN}✓ clang-tidy completed${NC}"
