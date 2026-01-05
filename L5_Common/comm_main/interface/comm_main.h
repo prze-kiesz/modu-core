@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include <cstdint>
 #include <system_error>
 
 namespace comm {
@@ -15,10 +16,10 @@ namespace comm {
 /**
  * @brief Error codes for Common layer initialization
  */
-enum class InitError {
-  Success = 0,              ///< Operation completed successfully
-  ModuleInitFailed = 1,     ///< Module initialization failed
-  ExceptionThrown = 2,      ///< Exception was thrown during operation
+enum class InitError : std::uint8_t {
+  SUCCESS = 0,              ///< Operation completed successfully
+  MODULE_INIT_FAILED = 1,     ///< Module initialization failed
+  EXCEPTION_THROWN = 2,      ///< Exception was thrown during operation
 };
 
 /**
@@ -26,20 +27,20 @@ enum class InitError {
  */
 class InitErrorCategory : public std::error_category {
  public:
-  const char* name() const noexcept override { return "comm_init"; }
-  std::string message(int ev) const override;
+  [[nodiscard]] const char* name() const noexcept override { return "comm_init"; }
+  [[nodiscard]] std::string message(int ev) const override;
 };
 
 /**
  * @brief Get the singleton instance of InitErrorCategory
  */
-const std::error_category& get_init_error_category() noexcept;
+[[nodiscard]] const std::error_category& getInitErrorCategory() noexcept;
 
 /**
  * @brief Helper function to create std::error_code from InitError
  */
-inline std::error_code make_error_code(InitError e) noexcept {
-  return {static_cast<int>(e), get_init_error_category()};
+[[nodiscard]] inline std::error_code makeErrorCode(InitError e) noexcept {
+  return {static_cast<int>(e), getInitErrorCategory()};
 }
 
 class Main {
@@ -56,9 +57,9 @@ class Main {
    * @details Thread-safe initialization using Meyers' Singleton pattern
    * @return Reference to the single Main instance
    */
-  static Main& Instance() {
-    static Main instance;
-    return instance;
+  [[nodiscard]] static Main& instance() {
+    static Main inst;
+    return inst;
   }
 
   /**
@@ -69,7 +70,7 @@ class Main {
    * @return std::error_code - empty on success, error code on failure
    * @note Currently argc/argv are unused but reserved for future configuration
    */
-  static std::error_code Init(int argc, const char* argv[]);
+  [[nodiscard]] static std::error_code init(int argc, const char* argv[]);
 
   /**
    * @brief Deinitialize all Common layer (L5) modules
@@ -77,7 +78,7 @@ class Main {
    * @return std::error_code - empty on success, error code on failure
    * @note Should be called last, after all higher layers are deinitialized
    */
-  static std::error_code Deinit();
+  [[nodiscard]] static std::error_code deinit();
 
   // Delete copy constructor and assignment operator (singleton pattern)
   Main(const Main&) = delete;

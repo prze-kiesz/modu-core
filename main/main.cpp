@@ -20,14 +20,14 @@ int main(const int argc, const char *argv[]) {
   // Initialize all layers starting from the lowest one.
   
   // L5 - Common layer (logging, signals, shared utilities) - LOWEST LAYER
-  auto ret_code = comm::Main::Init(argc, argv);
+  auto ret_code = comm::Main::init(argc, argv);
   if (ret_code) {
     LOG(ERROR) << "L5 Common initialization failed: " << ret_code.message();
     return 1;
   }
 
   // L4 - Infrastructure layer (networking, messaging, hardware access)
-  ret_code = infr::Main::Init(argc, argv);
+  ret_code = infr::Main::init(argc, argv);
   if (ret_code) {
     LOG(ERROR) << "L4 Infrastructure initialization failed: " << ret_code.message();
     return 1;
@@ -42,13 +42,13 @@ int main(const int argc, const char *argv[]) {
   // Deinitialize all layers in reverse order (highest to lowest)
   
   // L4 - Infrastructure layer
-  ret_code = infr::Main::Deinit();
+  ret_code = infr::Main::deinit();
   if (ret_code) {
     LOG(ERROR) << "L4 Infrastructure deinitialization failed: " << ret_code.message();
   }
 
   // L5 - Common layer (last, as it provides base services)
-  ret_code = comm::Main::Deinit();
+  ret_code = comm::Main::deinit();
   if (ret_code) {
     LOG(ERROR) << "L5 Common deinitialization failed: " << ret_code.message();
   }

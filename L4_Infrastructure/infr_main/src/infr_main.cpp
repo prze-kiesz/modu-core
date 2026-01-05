@@ -16,26 +16,26 @@ namespace infr {
 // Error category implementation
 std::string InitErrorCategory::message(int ev) const {
   switch (static_cast<InitError>(ev)) {
-    case InitError::Success:
+    case InitError::SUCCESS:
       return "Success";
-    case InitError::ModuleInitFailed:
+    case InitError::MODULE_INIT_FAILED:
       return "Module initialization failed";
-    case InitError::ExceptionThrown:
+    case InitError::EXCEPTION_THROWN:
       return "Exception was thrown during operation";
     default:
       return "Unknown error";
   }
 }
 
-const std::error_category& get_init_error_category() noexcept {
+const std::error_category& getInitErrorCategory() noexcept {
   static InitErrorCategory instance;
   return instance;
 }
 
-// Default constructor - no initialization required (modules initialized in Init())
+// Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
-std::error_code Main::Init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
+std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   // TODO: Future expansion - use argc/argv for configuration file path or command-line options
   // TODO: Add infrastructure layer modules initialization when implemented
 
@@ -43,7 +43,7 @@ std::error_code Main::Init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   return {};  // Success - empty error_code
 }
 
-std::error_code Main::Deinit() {
+std::error_code Main::deinit() {
   // TODO: Add deinitialization logic for Infrastructure layer modules when implemented
   // This is where network connections, message queues, and hardware resources should be released
   

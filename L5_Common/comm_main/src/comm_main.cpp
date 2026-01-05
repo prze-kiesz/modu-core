@@ -17,33 +17,33 @@ namespace comm {
 // Error category implementation
 std::string InitErrorCategory::message(int ev) const {
   switch (static_cast<InitError>(ev)) {
-    case InitError::Success:
+    case InitError::SUCCESS:
       return "Success";
-    case InitError::ModuleInitFailed:
+    case InitError::MODULE_INIT_FAILED:
       return "Module initialization failed";
-    case InitError::ExceptionThrown:
+    case InitError::EXCEPTION_THROWN:
       return "Exception was thrown during operation";
     default:
       return "Unknown error";
   }
 }
 
-const std::error_category& get_init_error_category() noexcept {
+const std::error_category& getInitErrorCategory() noexcept {
   static InitErrorCategory instance;
   return instance;
 }
 
-// Default constructor - no initialization required (modules initialized in Init())
+// Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
-std::error_code Main::Init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
+std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   // TODO: Future expansion - use argc/argv for configuration file path or command-line options
   // TODO: Add Config module initialization when implemented
 
   // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT)
   auto ret_code = Terminate::Instance().Start();
   if (ret_code) {
-    LOG(ERROR) << "Failed to start Terminate::Instance().Start(): " << ret_code.message();
+    LOG(ERROR) << "Failed to start Terminate::instance().start(): " << ret_code.message();
     return ret_code;
   }
 
@@ -51,9 +51,9 @@ std::error_code Main::Init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   return {};  // Success - empty error_code
 }
 
-std::error_code Main::Deinit() {
+std::error_code Main::deinit() {
   // TODO: Add deinitialization logic for Common layer modules when needed
-  // Currently no cleanup is required as Terminate is handled by WaitForTermination()
+  // Currently no cleanup is required as Terminate is handled by waitForTermination()
   
   LOG(INFO) << "Common layer (L5) deinitialization completed successfully";
   return {};  // Success - empty error_code
