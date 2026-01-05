@@ -1,6 +1,7 @@
 # modu-core
 
 [![Build and Test](https://github.com/prze-kiesz/modu-core/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/build-and-test.yml)
+[![Static Analysis](https://github.com/prze-kiesz/modu-core/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/static-analysis.yml)
 [![Docker Build](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
@@ -209,6 +210,11 @@ The project uses **GitHub Actions** for continuous integration and deployment:
   - Runs all unit tests with CTest
   - Test results uploaded as artifacts
   - Uses prebuilt Docker container for fast builds
+- ✅ **Static Analysis**: Automated code quality checks
+  - **clang-tidy**: Modern C++ linting and best practices
+  - **cppcheck**: Static analysis for bugs and undefined behavior
+  - **clang-format**: Code formatting verification
+  - Reports uploaded as artifacts for review
 - ✅ **Docker Image Build**: Automatically build and publish development container to GitHub Container Registry
   - Triggered on changes to `.devcontainer/Dockerfile`
   - Tagged with `latest`, branch name, PR number, and git SHA
@@ -348,13 +354,15 @@ See [LICENSE](LICENSE) file for details.
 - ✅ Unit testing infrastructure
 - ✅ systemd integration
 - ✅ CI/CD with automated builds and testing
+- ✅ Static code analysis (clang-tidy, cppcheck, clang-format)
 - ✅ Docker development container
 
 ### Planned Features
 - ✅ **Docker development container with automated builds**
 - ✅ **CI/CD pipeline with build and test automation**
+- ✅ **Static code analysis (clang-tidy, cppcheck)**
 - 🔄 Code coverage reporting
-- 🔄 Static analysis integration (clang-tidy, cppcheck)
+- 🔄 Automated package generation (deb/rpm)
 - 🔄 Documentation generation (Doxygen)
 - 🔄 Docker container support
 - 🔄 Performance benchmarking
