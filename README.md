@@ -205,11 +205,10 @@ The project uses **GitHub Actions** for continuous integration and deployment:
 ### Automated Workflows
 
 - ✅ **Build and Test**: Compile and test on every push and pull request
-  - Matrix builds: GCC/Clang × Debug/Release
+  - Builds: Debug and Release configurations with GCC
   - Runs all unit tests with CTest
   - Test results uploaded as artifacts
   - Uses prebuilt Docker container for fast builds
-  - Fallback build on Ubuntu 24.04 without container
 - ✅ **Docker Image Build**: Automatically build and publish development container to GitHub Container Registry
   - Triggered on changes to `.devcontainer/Dockerfile`
   - Tagged with `latest`, branch name, PR number, and git SHA

@@ -32,23 +32,16 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-        compiler: [gcc, clang]
-        include:
-          - compiler: gcc
-            cc: gcc
-            cxx: g++
-          - compiler: clang
-            cc: clang
-            cxx: clang++
+    
+    env:
+      CC: gcc
+      CXX: g++
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Configure CMake
-        env:
-          CC: ${{ matrix.cc }}
-          CXX: ${{ matrix.cxx }}
         run: |
           mkdir -p build
           cd build
@@ -71,14 +64,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.compiler }}-${{ matrix.build_type }}
+          name: test-results-${{ matrix.build_type }}
           path: |
             build/Testing/Temporary/LastTest.log
             build/Testing/Temporary/LastTestsFailed.log
           if-no-files-found: ignore
 
       - name: Upload build artifacts
-        if: matrix.build_type == 'Release' && matrix.compiler == 'gcc'
+        if: matrix.build_type == 'Release'
         uses: actions/upload-artifact@v4
         with:
           name: modu-core-${{ matrix.build_type }}-${{ github.sha }}
@@ -91,7 +84,7 @@ jobs:
         if: always()
         run: |
           cd build
-          echo "## Test Summary - ${{ matrix.compiler }} (${{ matrix.build_type }})" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Summary (${{ matrix.build_type }})" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           ctest --verbose 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
