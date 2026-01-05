@@ -28,7 +28,7 @@ enum class InitError : std::uint8_t {
 class InitErrorCategory : public std::error_category {
  public:
   [[nodiscard]] const char* name() const noexcept override { return "infr_init"; }
-  [[nodiscard]] std::string message(int ev) const override;
+  [[nodiscard]] std::string message(int error_value) const override;
 };
 
 /**
@@ -39,8 +39,8 @@ class InitErrorCategory : public std::error_category {
 /**
  * @brief Helper function to create std::error_code from InitError
  */
-[[nodiscard]] inline std::error_code makeErrorCode(InitError e) noexcept {
-  return {static_cast<int>(e), getInitErrorCategory()};
+[[nodiscard]] inline std::error_code makeErrorCode(InitError err) noexcept {
+  return {static_cast<int>(err), getInitErrorCategory()};
 }
 
 class Main {

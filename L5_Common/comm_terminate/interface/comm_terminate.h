@@ -28,7 +28,7 @@ enum class TerminateError {
 class TerminateErrorCategory : public std::error_category {
  public:
   const char* name() const noexcept override { return "comm_terminate"; }
-  std::string message(int ev) const override;
+  std::string message(int error_value) const override;
 };
 
 /**
@@ -39,8 +39,8 @@ const std::error_category& get_terminate_error_category() noexcept;
 /**
  * @brief Helper function to create std::error_code from TerminateError
  */
-inline std::error_code make_error_code(TerminateError e) noexcept {
-  return {static_cast<int>(e), get_terminate_error_category()};
+inline std::error_code make_error_code(TerminateError err) noexcept {
+  return {static_cast<int>(err), get_terminate_error_category()};
 }
 
 class Terminate {

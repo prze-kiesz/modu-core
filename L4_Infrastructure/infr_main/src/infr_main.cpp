@@ -14,8 +14,8 @@
 namespace infr {
 
 // Error category implementation
-std::string InitErrorCategory::message(int ev) const {
-  switch (static_cast<InitError>(ev)) {
+std::string InitErrorCategory::message(int error_value) const {
+  switch (static_cast<InitError>(error_value)) {
     case InitError::SUCCESS:
       return "Success";
     case InitError::MODULE_INIT_FAILED:

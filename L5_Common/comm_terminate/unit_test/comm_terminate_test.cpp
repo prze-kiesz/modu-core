@@ -103,8 +103,8 @@ TEST_F(TerminateTest, TerminateAppCanBeCalledProgrammatically) {
  * @brief Test that error category is singleton
  */
 TEST_F(TerminateTest, ErrorCategoryIsSingleton) {
-  auto& cat1 = get_terminate_error_category();
-  auto& cat2 = get_terminate_error_category();
+  const auto& cat1 = get_terminate_error_category();
+  const auto& cat2 = get_terminate_error_category();
   
   EXPECT_EQ(&cat1, &cat2);
 }

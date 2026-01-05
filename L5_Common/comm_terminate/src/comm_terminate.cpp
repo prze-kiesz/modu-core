@@ -62,8 +62,8 @@ std::string GetSignalName(int signal) {
 namespace comm {
 
 // Error category implementation
-std::string TerminateErrorCategory::message(int ev) const {
-  switch (static_cast<TerminateError>(ev)) {
+std::string TerminateErrorCategory::message(int error_value) const {
+  switch (static_cast<TerminateError>(error_value)) {
     case TerminateError::Success:
       return "Success";
     case TerminateError::SignalMaskFailed:
