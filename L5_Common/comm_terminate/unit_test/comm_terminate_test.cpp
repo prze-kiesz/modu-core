@@ -9,8 +9,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <glog/logging.h>
-#include <thread>
-#include <chrono>
 
 #include "comm_terminate.h"
 
