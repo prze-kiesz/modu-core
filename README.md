@@ -1,5 +1,9 @@
 # modu-core
 
+[![Build and Test](https://github.com/prze-kiesz/modu-core/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/build-and-test.yml)
+[![Docker Build](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml)
+[![License](https://img.shields.io/badge/License-BSD_2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
+
 Universal C++ Application Framework with Layered Modular Architecture
 
 ## Project Overview
@@ -200,15 +204,19 @@ The project uses **GitHub Actions** for continuous integration and deployment:
 
 ### Automated Workflows
 
+- ✅ **Build and Test**: Compile and test on every push and pull request
+  - Matrix builds: GCC/Clang × Debug/Release
+  - Runs all unit tests with CTest
+  - Test results uploaded as artifacts
+  - Uses prebuilt Docker container for fast builds
+  - Fallback build on Ubuntu 24.04 without container
 - ✅ **Docker Image Build**: Automatically build and publish development container to GitHub Container Registry
   - Triggered on changes to `.devcontainer/Dockerfile`
   - Tagged with `latest`, branch name, PR number, and git SHA
   - Published to `ghcr.io/prze-kiesz/modu-core`
   - Semantic versioning on releases
-- ✅ **Build Verification**: Compile on every push and pull request (planned)
-- ✅ **Unit Tests**: Run all tests and report results (planned)
-- ✅ **Code Quality**: Static analysis and linting (planned)
-- ✅ **Coverage Reports**: Track test coverage trends (planned)
+- 🔄 **Code Quality**: Static analysis and linting (planned)
+- 🔄 **Coverage Reports**: Track test coverage trends (planned)
 - 📦 **Package Creation**: Build `.deb` and `.rpm` packages (planned)
 - 🚀 **Release Automation**: Automatic versioning and release creation (planned)
 
@@ -340,13 +348,14 @@ See [LICENSE](LICENSE) file for details.
 - ✅ Basic modules (comm_main, comm_terminate, infr_main)
 - ✅ Unit testing infrastructure
 - ✅ systemd integration
+- ✅ CI/CD with automated builds and testing
+- ✅ Docker development container
 
 ### Planned Features
 - ✅ **Docker development container with automated builds**
-- 🔄 Complete CI/CD pipeline with GitHub Actions
-- 🔄 Automated package generation (deb/rpm)
+- ✅ **CI/CD pipeline with build and test automation**
 - 🔄 Code coverage reporting
-- 🔄 Static analysis integration
+- 🔄 Static analysis integration (clang-tidy, cppcheck)
 - 🔄 Documentation generation (Doxygen)
 - 🔄 Docker container support
 - 🔄 Performance benchmarking
