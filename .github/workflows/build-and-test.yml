@@ -86,48 +86,11 @@ jobs:
             build/main/*/unit_test/*_unittest
           retention-days: 7
 
-  build-without-container:
-    runs-on: ubuntu-24.04
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            libgtest-dev \
-            libgmock-dev \
-            libgoogle-glog-dev \
-            libsystemd-dev \
-            pkg-config
-
-      - name: Configure CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTING=ON
-
-      - name: Build
-        run: |
-          cd build
-          make -j$(nproc)
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
-
       - name: Test Summary
         if: always()
         run: |
           cd build
-          echo "## Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Summary - ${{ matrix.compiler }} (${{ matrix.build_type }})" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           ctest --verbose 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
