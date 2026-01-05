@@ -171,16 +171,28 @@ jobs:
           NEEDS_FORMAT=""
           for file in $FILES; do
             if ! clang-format --dry-run --Werror "$file" 2>/dev/null; then
-              NEEDS_FORMAT="$NEEDS_FORMAT\n$file"
+              NEEDS_FORMAT="$NEEDS_FORMAT$file\n"
             fi
           done
           
+          # Save results for summary
           if [ -n "$NEEDS_FORMAT" ]; then
+            echo -e "$NEEDS_FORMAT" > clang-format-issues.txt
             echo "::warning::The following files need formatting:"
             echo -e "$NEEDS_FORMAT"
             echo "Run 'clang-format -i <file>' to fix formatting"
-            # Don't fail the build, just warn
-            exit 0
           else
-            echo "All files are properly formatted"
+            echo "All files are properly formatted" > clang-format-issues.txt
           fi
+
+      - name: Generate clang-format summary
+        if: always()
+        run: |
+          echo "## Clang-Format Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f clang-format-issues.txt ]; then
+            cat clang-format-issues.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No formatting issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
