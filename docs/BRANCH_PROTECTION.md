@@ -27,7 +27,10 @@ main
 #### Pull Request Requirements
 
 - ✅ **Require a pull request before merging**
-  - ✅ **Require approvals**: 1 (or more for stricter control)
+  - ✅ **Require approvals**: 1
+  - ⚪ **Include administrators**: UNCHECKED
+    - Administrators can merge without approval
+    - Non-admin contributors require 1 approval
   - ✅ **Dismiss stale pull request approvals when new commits are pushed**
   - ✅ **Require review from Code Owners** (optional, if CODEOWNERS file exists)
   - ⚠️ **Require approval of the most recent reviewable push**
@@ -62,14 +65,15 @@ main
 
 #### Administrative Enforcement
 
-- ⚠️ **Do not allow bypassing the above settings**
-  - Apply rules to administrators (recommended for production)
-  - Can be disabled for initial setup/testing
+- ⚪ **Do not allow bypassing the above settings**: **UNCHECKED**
+  - Allows administrators to merge without approval
+  - Non-admin contributors still require approvals
+  - All users (including admins) must pass CI/CD checks
 
-- ⚠️ **Allow force pushes**: **DISABLED** (unchecked)
+- ❌ **Allow force pushes**: **DISABLED** (unchecked)
   - Prevents force pushes to main branch
 
-- ⚠️ **Allow deletions**: **DISABLED** (unchecked)
+- ❌ **Allow deletions**: **DISABLED** (unchecked)
   - Prevents accidental branch deletion
 
 ### 4. Additional Recommendations
@@ -109,6 +113,34 @@ git push origin main
 # Expected error:
 # remote: error: GH006: Protected branch update failed for refs/heads/main.
 ```
+
+## Recommended Configuration Summary
+
+For a repository with one administrator and potential external contributors:
+
+```
+✅ Require pull request before merging
+   ✅ Require approvals: 1
+   ⚪ Include administrators: UNCHECKED (allows admin to self-merge)
+✅ Require status checks to pass before merging
+   ✅ Require branches to be up to date
+   ✅ build-test-debug
+   ✅ build-test-release
+   ✅ static-analysis-clang-tidy
+   ✅ static-analysis-cppcheck
+   ✅ static-analysis-clang-format
+✅ Require conversation resolution before merging
+✅ Require linear history (squash/rebase only)
+⚪ Do not allow bypassing: UNCHECKED (admin bypass enabled)
+❌ Allow force pushes: OFF
+❌ Allow deletions: OFF
+```
+
+**Benefits:**
+- Administrator can merge quickly after CI/CD passes
+- External contributors require code review
+- All changes must pass automated checks
+- Clean linear history maintained
 
 ## Current Workflow Configuration
 

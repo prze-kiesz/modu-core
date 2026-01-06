@@ -134,6 +134,7 @@ When creating a PR:
 
 ### 7. Code Review Process
 
+**For Contributors:**
 - All PRs require at least one approval from a maintainer
 - CI/CD checks must pass:
   - ✅ Build succeeds (Debug and Release)
@@ -142,6 +143,11 @@ When creating a PR:
   - ✅ Code formatting correct (clang-format)
 - Address reviewer feedback promptly
 - Keep PRs focused and reasonably sized
+
+**For Administrators:**
+- Can merge own PRs after CI/CD checks pass
+- No approval required (but CI/CD is mandatory)
+- Same code quality standards apply
 
 ### 8. After Approval
 
@@ -161,7 +167,9 @@ git push origin main
 The `main` branch is protected with the following rules:
 
 - ✅ Require pull request before merging
-- ✅ Require status checks to pass:
+  - Contributors: 1 approval required
+  - Administrators: Can self-merge (no approval needed)
+- ✅ Require status checks to pass (mandatory for all users):
   - Build and Test (Debug)
   - Build and Test (Release)
   - Static Analysis (clang-tidy)
