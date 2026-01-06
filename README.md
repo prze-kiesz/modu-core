@@ -361,7 +361,7 @@ See [LICENSE](LICENSE) file for details.
 - ✅ **Docker development container with automated builds**
 - ✅ **CI/CD pipeline with build and test automation**
 - 🔄 **Static code analysis (clang-tidy, cppcheck, clang-format)**
-- � Code coverage reporting
+- 📋 Code coverage reporting
 - 📋 Automated package generation (deb/rpm)
 - 📋 Documentation generation (Doxygen)
 - 📋 Docker container support
@@ -379,4 +379,4 @@ For issues, questions, or contributions:
 
 ---
 
-**Built on 30 years of software engineering experience, developed with AI assistance using modern C++ and best practices**
+**Main concepts based on software experience - developed with AI assistance**
