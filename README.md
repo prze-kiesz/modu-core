@@ -395,6 +395,8 @@ See [LICENSE](LICENSE) file for details.
 For issues, questions, or contributions:
 - **Issues**: https://github.com/prze-kiesz/modu-core/issues
 - **Discussions**: https://github.com/prze-kiesz/modu-core/discussions
+- **Contributing Guide**: [CONTRIBUTING.md](.github/CONTRIBUTING.md)
+- **Pull Request Template**: Automatically loaded when creating PRs
 
 ---
 
