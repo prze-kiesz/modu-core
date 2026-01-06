@@ -326,14 +326,33 @@ make modu-core-my_module_unittest
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
+Contributions are welcome! All changes must be submitted through pull requests.
 
-1. **Follow the architecture**: Respect layer dependencies
-2. **Write tests**: All new code must have unit tests
+**Quick Start:**
+
+1. **Fork the repository** and create a feature branch
+2. **Make your changes** following the architecture guidelines
+3. **Run tests and static analysis** locally
+4. **Submit a pull request** using the provided template
+5. **Address review feedback** and wait for approval
+
+**Development Workflow:**
+
+- All changes go through pull requests (no direct commits to `main`)
+- PRs require passing CI/CD checks (builds, tests, static analysis)
+- At least one approval required before merging
+- Squash merging enforced for clean history
+
+**Guidelines:**
+
+1. **Follow the architecture**: Respect layer dependencies (higher → lower only)
+2. **Write tests**: All new code must have unit tests with good coverage
 3. **Document interfaces**: Clear comments in header files
 4. **Use modern C++**: Leverage C++20 features appropriately
 5. **Error handling**: Use std::error_code for recoverable errors
-6. **Code style**: Follow existing conventions
+6. **Code style**: Follow existing conventions (clang-format enforced)
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ## License
 
