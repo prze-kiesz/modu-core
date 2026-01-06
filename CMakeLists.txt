@@ -43,11 +43,11 @@ find_package(Threads REQUIRED)
 find_package(GTest REQUIRED)
 find_package(glog REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET systemd)
+pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
 
 set(MODU_CORE_COMMON_LIBS
   glog::glog
-  systemd
+  PkgConfig::SYSTEMD
 )
 
 

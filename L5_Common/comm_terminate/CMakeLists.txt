@@ -48,7 +48,8 @@ target_include_directories(${MODULE_TARGET}
 # Dependencies
 #
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET systemd)
+pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
+find_package(glog REQUIRED)
 
 target_link_libraries(${MODULE_TARGET}
     PRIVATE

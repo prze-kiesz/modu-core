@@ -1,17 +1,31 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
-###############
-# Unit tests for comm_terminate module
-###############
+cmake_minimum_required(VERSION 3.22)
 
-set(TEST_TARGET "${MODULE_TARGET}_unittest")
-
-###############
-# Find dependencies
-#
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET systemd)
+# Check if this is being built as part of main project or standalone
+if(NOT PROJECT_NAME)
+    project(comm_terminate_tests VERSION 1.0.0 LANGUAGES CXX)
+    
+    # Standalone build - set up dependencies
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    
+    # Find all required packages for standalone build
+    find_package(GTest REQUIRED)
+    find_package(glog REQUIRED)
+    find_package(Threads REQUIRED)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
+    
+    set(MODULE_TARGET "modu-core-comm_terminate")
+    set(TEST_TARGET "${MODULE_TARGET}_unittest")
+else()
+    # Part of main project build
+    set(TEST_TARGET "${MODULE_TARGET}_unittest")
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(SYSTEMD REQUIRED IMPORTED_TARGET libsystemd)
+endif()
 
 ###############
 # Test source files
@@ -29,6 +43,9 @@ add_executable(${TEST_TARGET}
     ${TEST_SOURCES}
 )
 
+# Set C++20 for test target
+target_compile_features(${TEST_TARGET} PRIVATE cxx_std_20)
+
 ###############
 # Link with module and dependencies
 #
@@ -37,7 +54,7 @@ target_link_libraries(${TEST_TARGET}
         GTest::gtest_main
         GTest::gmock
         glog::glog
-        systemd
+        PkgConfig::SYSTEMD
         Threads::Threads
 )
 
