@@ -113,14 +113,12 @@ void Terminate::WaitForTerminateSignal() {
         sd_notify(0, "RELOADING=1");
         
         // Queue event for processing thread to handle
+        // Note: READY=1 will be sent by event processor after listeners complete
         {
           std::lock_guard<std::mutex> lock(m_event_mutex);
           m_event_queue.push(EventType::ConfigReload);
         }
         m_event_cv.notify_one();
-        
-        // After reload, notify systemd we're ready again
-        sd_notify(0, "READY=1");
         
         // Continue waiting for signals (don't terminate)
         continue;
@@ -195,6 +193,8 @@ std::error_code Terminate::Start() {
     m_event_processor = std::make_unique<std::thread>(&Terminate::ProcessEvents, this);
   } catch (const std::exception& e) {
     LOG(ERROR) << "Failed to create event processor thread: " << e.what();
+    // Restore signal mask before returning error
+    sigprocmask(SIG_UNBLOCK, &m_waited_signals, nullptr);  // NOLINT(concurrency-mt-unsafe)
     return make_error_code(TerminateError::ThreadCreationFailed);
   }
 
@@ -203,6 +203,20 @@ std::error_code Terminate::Start() {
     m_signal_wait = std::make_unique<std::thread>(&Terminate::WaitForTerminateSignal, this);
   } catch (const std::exception& e) {
     LOG(ERROR) << "Failed to create signal handler thread: " << e.what();
+    
+    // Cleanup event processor thread before returning error
+    {
+      std::lock_guard<std::mutex> lock(m_event_mutex);
+      m_stop_event_processor = true;
+      m_event_queue.push(EventType::Shutdown);
+    }
+    m_event_cv.notify_one();
+    if (m_event_processor && m_event_processor->joinable()) {
+      m_event_processor->join();
+    }
+    
+    // Restore signal mask
+    sigprocmask(SIG_UNBLOCK, &m_waited_signals, nullptr);  // NOLINT(concurrency-mt-unsafe)
     return make_error_code(TerminateError::ThreadCreationFailed);
   }
 
@@ -281,6 +295,9 @@ void Terminate::ProcessEvents() {
           }
           
           LOG(INFO) << "Config reload event processed, invoked " << listeners_copy.size() << " listeners";
+          
+          // Notify systemd that reload is complete and we're ready again
+          sd_notify(0, "READY=1");
           break;
         }
         
