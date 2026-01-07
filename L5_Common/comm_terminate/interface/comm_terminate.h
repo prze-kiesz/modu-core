@@ -143,6 +143,8 @@ class Terminate {
    * @param callback Function to call when SIGHUP signal is received
    * @details Callback is invoked from event processor thread, not signal handler
    * @note Thread-safe, can be called from any thread
+   * @note If registered during active reload processing, the listener may not be
+   *       invoked for that specific reload event, but will be called for subsequent reloads
    * 
    * Example usage:
    * @code

@@ -303,7 +303,8 @@ void Terminate::ProcessEvents() {
         
         case EventType::Shutdown:
           LOG(INFO) << "Processing Shutdown event, event processor will exit";
-          return;  // Exit thread
+          m_stop_event_processor = true;
+          break;  // Exit loop, will log at line 297
       }
       
       // Re-acquire lock for next iteration

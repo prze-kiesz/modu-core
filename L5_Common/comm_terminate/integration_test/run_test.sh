@@ -22,7 +22,6 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 BUILD_DIR="${PROJECT_ROOT}/build"
 TEST_EXECUTABLE="${BUILD_DIR}/main/comm_terminate/integration_test/modu-core-comm_terminate_integration_test"
 LOG_FILE="/tmp/comm_terminate_integration_test.log"
-TIMEOUT=15
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}comm_terminate Integration Test Runner${NC}"
@@ -53,6 +52,9 @@ echo ""
 "$TEST_EXECUTABLE" > "$LOG_FILE" 2>&1 &
 TEST_PID=$!
 
+# Ensure test process is killed if script exits unexpectedly
+trap "kill -9 $TEST_PID 2>/dev/null || true" EXIT
+
 echo -e "Test process started with PID: ${YELLOW}$TEST_PID${NC}"
 
 # Give the test time to initialize
@@ -71,6 +73,12 @@ fi
 
 sleep 2
 
+# Verify process is still running after first SIGHUP
+if ! kill -0 $TEST_PID 2>/dev/null; then
+    echo -e "${RED}✗ Test process died after first SIGHUP${NC}"
+    exit 1
+fi
+
 # Test 2: Send another SIGHUP to test multiple reloads
 echo -e "\n${BLUE}Test 2: Sending second SIGHUP${NC}"
 kill -SIGHUP $TEST_PID
@@ -83,6 +91,12 @@ else
 fi
 
 sleep 2
+
+# Verify process is still running after second SIGHUP
+if ! kill -0 $TEST_PID 2>/dev/null; then
+    echo -e "${RED}✗ Test process died after second SIGHUP${NC}"
+    exit 1
+fi
 
 # Test 3: Graceful termination with SIGTERM
 echo -e "\n${BLUE}Test 3: Sending SIGTERM (graceful shutdown)${NC}"
