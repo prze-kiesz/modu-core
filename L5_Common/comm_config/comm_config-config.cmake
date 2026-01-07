@@ -1,14 +1,39 @@
 # SPDX-License-Identifier: BSD-2-Clause
 # SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
-# comm_config module configuration
-# This file is used by other modules to find and link against comm_config
+###############
+# comm_config-config.cmake
+# Configuration file for integrating comm_config module with the project
+# This file is called by find_package(comm_config)
+###############
 
-if(NOT TARGET modu-core-comm_config)
-    # Module not yet built - add it
-    add_subdirectory(${CMAKE_CURRENT_LIST_DIR} modu-core-comm_config)
+###############
+# Define module name
+#
+set(CURRENT_LIB_NAME "comm_config")
+
+# Prevent multiple inclusion
+if (TARGET ${PROJECT_NAME}-${CURRENT_LIB_NAME})
+    return()
 endif()
 
-# Export target for dependent modules
-set(COMM_CONFIG_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/interface)
-set(COMM_CONFIG_LIBRARIES modu-core-comm_config)
+message(STATUS "Configuring module: ${CURRENT_LIB_NAME}")
+
+###############
+# Build the module using its CMakeLists.txt
+#
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${CURRENT_LIB_NAME})
+
+###############
+# Export interface to main project
+# Makes comm_config headers accessible to other modules
+#
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/interface>
+    $<INSTALL_INTERFACE:include>
+)
+
+###############
+# Link module to main project
+#
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}-${CURRENT_LIB_NAME})

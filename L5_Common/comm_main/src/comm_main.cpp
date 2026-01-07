@@ -10,6 +10,8 @@
 #include "comm_main.h"
 
 #include <glog/logging.h>
+#include <cstring>
+#include "comm_config.h"
 #include "comm_terminate.h"
 
 namespace comm {
@@ -36,9 +38,51 @@ const std::error_category& getInitErrorCategory() noexcept {
 // Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
-std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
-  // TODO: Future expansion - use argc/argv for configuration file path or command-line options
-  // TODO: Add Config module initialization when implemented
+Config& Main::getConfig() {
+  static Config config;
+  return config;
+}
+
+std::error_code Main::init(int argc, const char* argv[]) {
+  // Load configuration
+  Config& config = getConfig();
+  
+  // Check for --config command-line argument
+  const char* config_path = nullptr;
+  for (int idx = 1; idx < argc - 1; ++idx) {
+    if (std::strcmp(argv[idx], "--config") == 0) {
+      config_path = argv[idx + 1];
+      LOG(INFO) << "Using configuration file from command line: " << config_path;
+      break;
+    }
+  }
+
+  std::error_code err;
+  if (config_path) {
+    // Load from specified path
+    err = config.load_from_file(config_path);
+    if (err) {
+      LOG(WARNING) << "Failed to load config from " << config_path << ": " << err.message();
+      LOG(INFO) << "Falling back to XDG hierarchy";
+      err = config.load_xdg_hierarchy("modu-core");
+    }
+  } else {
+    // Load using XDG hierarchy: /etc/modu-core/ and ~/.config/modu-core/
+    err = config.load_xdg_hierarchy("modu-core");
+  }
+
+  if (err && err != make_error_code(ConfigError::FileNotFound)) {
+    LOG(ERROR) << "Failed to load configuration: " << err.message();
+    return makeErrorCode(InitError::MODULE_INIT_FAILED);
+  }
+  
+  if (err == make_error_code(ConfigError::FileNotFound)) {
+    LOG(INFO) << "No configuration files found, using defaults";
+  } else {
+    LOG(INFO) << "Configuration loaded successfully";
+    auto keys = config.get_all_keys();
+    LOG(INFO) << "Loaded " << keys.size() << " configuration keys";
+  }
 
   // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT)
   auto ret_code = Terminate::Instance().Start();

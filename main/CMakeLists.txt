@@ -12,3 +12,6 @@ find_package("comm_config" REQUIRED)
 # L4 layer modules
 find_package("infr_main" REQUIRED)
 
+# Modules are automatically linked via their *-config.cmake files
+# No explicit target_link_libraries needed here
+

@@ -12,6 +12,10 @@
 #include <system_error>
 
 namespace comm {
+class Config;
+}
+
+namespace comm {
 
 /**
  * @brief Error codes for Common layer initialization
@@ -64,13 +68,20 @@ class Main {
 
   /**
    * @brief Initialize all Common layer (L5) modules
-   * @details Starts termination handler and prepares common infrastructure
-   * @param argc Command-line argument count (reserved for future use)
-   * @param argv Command-line argument values (reserved for future use)
+   * @details Starts termination handler and loads configuration
+   * @param argc Command-line argument count
+   * @param argv Command-line argument values (supports --config <path>)
    * @return std::error_code - empty on success, error code on failure
-   * @note Currently argc/argv are unused but reserved for future configuration
+   * @note Loads configuration from XDG hierarchy or custom path if --config provided
    */
   [[nodiscard]] static std::error_code init(int argc, const char* argv[]);
+
+  /**
+   * @brief Get application configuration
+   * @return Reference to the global Config instance
+   * @note Configuration is loaded during init() and available globally
+   */
+  [[nodiscard]] static Config& getConfig();
 
   /**
    * @brief Deinitialize all Common layer (L5) modules

@@ -47,7 +47,13 @@ target_include_directories(${MODULE_TARGET}
 ###############
 # Dependencies
 #
+find_package(glog REQUIRED)
+find_package("comm_config" REQUIRED)
+find_package("comm_terminate" REQUIRED)
+
 target_link_libraries(${MODULE_TARGET}
+    PUBLIC
+        ${PROJECT_NAME}-comm_config
     PRIVATE
         ${PROJECT_NAME}-comm_terminate
         glog::glog
