@@ -61,6 +61,7 @@ target_link_libraries(${MODULE_TARGET}
 #
 if(BUILD_TESTING)
     add_subdirectory(unit_test)
+    add_subdirectory(integration_test)
 endif()
 
 ###############
