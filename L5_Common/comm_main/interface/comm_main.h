@@ -10,10 +10,7 @@
 
 #include <cstdint>
 #include <system_error>
-
-namespace comm {
-class Config;
-}
+#include "comm_config.h"
 
 namespace comm {
 
@@ -78,10 +75,13 @@ class Main {
 
   /**
    * @brief Get application configuration
-   * @return Reference to the global Config instance
+   * @return Reference to the global Config singleton instance
    * @note Configuration is loaded during init() and available globally
+   * @deprecated Use Config::instance() directly instead
    */
-  [[nodiscard]] static Config& getConfig();
+  [[nodiscard]] static Config& getConfig() {
+    return Config::instance();
+  }
 
   /**
    * @brief Deinitialize all Common layer (L5) modules

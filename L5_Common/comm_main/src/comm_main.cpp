@@ -38,14 +38,9 @@ const std::error_category& getInitErrorCategory() noexcept {
 // Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
-Config& Main::getConfig() {
-  static Config config;
-  return config;
-}
-
 std::error_code Main::init(int argc, const char* argv[]) {
-  // Load configuration
-  Config& config = getConfig();
+  // Get global configuration singleton
+  Config& config = Config::instance();
   
   // Check for --config command-line argument
   const char* config_path = nullptr;

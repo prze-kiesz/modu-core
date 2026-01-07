@@ -44,14 +44,17 @@ class Config::ConfigImpl {
   toml::table data;
 };
 
-// Constructor implementations
+// Singleton instance (Meyer's Singleton)
+Config& Config::instance() {
+  static Config instance;
+  return instance;
+}
+
+// Private constructor
 Config::Config() : m_impl(std::make_unique<ConfigImpl>()) {}
 
+// Destructor
 Config::~Config() = default;
-
-Config::Config(const std::filesystem::path& file_path) : m_impl(std::make_unique<ConfigImpl>()) {
-  [[maybe_unused]] auto err = load_from_file(file_path);
-}
 
 // File operations
 std::error_code Config::load_from_file(const std::filesystem::path& file_path) {

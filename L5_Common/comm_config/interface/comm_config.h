@@ -47,7 +47,7 @@ inline std::error_code make_error_code(ConfigError err) noexcept {
 }
 
 /**
- * @brief Configuration manager using TOML format
+ * @brief Configuration manager using TOML format (Singleton)
  * 
  * Supports XDG Base Directory specification:
  * - System config: /etc/xdg/<app_name>/ or /etc/<app_name>/
@@ -63,20 +63,10 @@ inline std::error_code make_error_code(ConfigError err) noexcept {
 class Config {
  public:
   /**
-   * @brief Construct empty configuration
+   * @brief Get singleton instance of Config
+   * @return Reference to the global Config instance
    */
-  Config();
-
-  /**
-   * @brief Destructor
-   */
-  ~Config();
-
-  /**
-   * @brief Construct and load configuration from file
-   * @param file_path Path to TOML configuration file
-   */
-  explicit Config(const std::filesystem::path& file_path);
+  static Config& instance();
 
   /**
    * @brief Load configuration from TOML file
@@ -209,6 +199,22 @@ class Config {
   [[nodiscard]] std::vector<std::string> get_all_keys() const;
 
  private:
+  /**
+   * @brief Private constructor for singleton
+   */
+  Config();
+
+  /**
+   * @brief Private destructor
+   */
+  ~Config();
+
+  // Delete copy and move constructors/operators
+  Config(const Config&) = delete;
+  Config& operator=(const Config&) = delete;
+  Config(Config&&) = delete;
+  Config& operator=(Config&&) = delete;
+
   /// Internal storage for configuration data (TOML table)
   class ConfigImpl;
   std::unique_ptr<ConfigImpl> m_impl;

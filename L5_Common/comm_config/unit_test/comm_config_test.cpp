@@ -12,12 +12,19 @@ namespace {
 class ConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
+    // Get singleton and clear for each test
+    config = &comm::Config::instance();
+    config->clear();
+    
     // Create temporary directory for test files
     test_dir = std::filesystem::temp_directory_path() / "modu_core_config_test";
     std::filesystem::create_directories(test_dir);
   }
 
   void TearDown() override {
+    // Clear configuration state
+    config->clear();
+    
     // Clean up test directory
     if (std::filesystem::exists(test_dir)) {
       std::filesystem::remove_all(test_dir);
@@ -29,12 +36,12 @@ class ConfigTest : public ::testing::Test {
     file << content;
   }
 
+  comm::Config* config;
   std::filesystem::path test_dir;
 };
 
 TEST_F(ConfigTest, EmptyConfigCreation) {
-  comm::Config config;
-  EXPECT_EQ(config.get_all_keys().size(), 0);
+  EXPECT_EQ(config->get_all_keys().size(), 0);
 }
 
 TEST_F(ConfigTest, LoadValidTOML) {
@@ -53,21 +60,21 @@ TEST_F(ConfigTest, LoadValidTOML) {
     enabled = ["auth", "logging", "metrics"]
   )");
 
-  comm::Config config;
-  auto err = config.load_from_file(test_dir / "test.toml");
+  // Using singleton
+  auto err = config->load_from_file(test_dir / "test.toml");
   
   ASSERT_EQ(err.value(), 0);
   
-  EXPECT_EQ(config.get_string("server.host"), "localhost");
-  EXPECT_EQ(config.get_int("server.port"), 8080);
-  EXPECT_EQ(config.get_bool("server.debug"), true);
+  EXPECT_EQ(config->get_string("server.host"), "localhost");
+  EXPECT_EQ(config->get_int("server.port"), 8080);
+  EXPECT_EQ(config->get_bool("server.debug"), true);
   
-  EXPECT_EQ(config.get_string("database.connection_string"),
+  EXPECT_EQ(config->get_string("database.connection_string"),
             "postgresql://localhost:5432/mydb");
-  EXPECT_EQ(config.get_int("database.max_connections"), 100);
-  EXPECT_DOUBLE_EQ(config.get_double("database.timeout").value(), 30.5);
+  EXPECT_EQ(config->get_int("database.max_connections"), 100);
+  EXPECT_DOUBLE_EQ(config->get_double("database.timeout").value(), 30.5);
   
-  auto features = config.get_string_array("features.enabled");
+  auto features = config->get_string_array("features.enabled");
   ASSERT_TRUE(features.has_value());
   EXPECT_EQ(features->size(), 3);
   EXPECT_EQ((*features)[0], "auth");
@@ -76,8 +83,8 @@ TEST_F(ConfigTest, LoadValidTOML) {
 }
 
 TEST_F(ConfigTest, LoadNonExistentFile) {
-  comm::Config config;
-  auto err = config.load_from_file(test_dir / "nonexistent.toml");
+  // Using singleton
+  auto err = config->load_from_file(test_dir / "nonexistent.toml");
   
   EXPECT_EQ(err, comm::make_error_code(comm::ConfigError::FileNotFound));
 }
@@ -88,27 +95,27 @@ TEST_F(ConfigTest, LoadInvalidTOML) {
     host = "localhost"
   )");
 
-  comm::Config config;
-  auto err = config.load_from_file(test_dir / "invalid.toml");
+  // Using singleton
+  auto err = config->load_from_file(test_dir / "invalid.toml");
   
   EXPECT_EQ(err, comm::make_error_code(comm::ConfigError::ParseError));
 }
 
 TEST_F(ConfigTest, SetAndGetValues) {
-  comm::Config config;
+  // Using singleton
   
-  config.set_string("app.name", "test_app");
-  config.set_int("app.version", 42);
-  config.set_double("app.ratio", 3.14);
-  config.set_bool("app.enabled", true);
-  config.set_string_array("app.tags", {"production", "critical"});
+  config->set_string("app.name", "test_app");
+  config->set_int("app.version", 42);
+  config->set_double("app.ratio", 3.14);
+  config->set_bool("app.enabled", true);
+  config->set_string_array("app.tags", {"production", "critical"});
   
-  EXPECT_EQ(config.get_string("app.name"), "test_app");
-  EXPECT_EQ(config.get_int("app.version"), 42);
-  EXPECT_DOUBLE_EQ(config.get_double("app.ratio").value(), 3.14);
-  EXPECT_EQ(config.get_bool("app.enabled"), true);
+  EXPECT_EQ(config->get_string("app.name"), "test_app");
+  EXPECT_EQ(config->get_int("app.version"), 42);
+  EXPECT_DOUBLE_EQ(config->get_double("app.ratio").value(), 3.14);
+  EXPECT_EQ(config->get_bool("app.enabled"), true);
   
-  auto tags = config.get_string_array("app.tags");
+  auto tags = config->get_string_array("app.tags");
   ASSERT_TRUE(tags.has_value());
   EXPECT_EQ(tags->size(), 2);
   EXPECT_EQ((*tags)[0], "production");
@@ -116,35 +123,36 @@ TEST_F(ConfigTest, SetAndGetValues) {
 }
 
 TEST_F(ConfigTest, HasKeyAndRemove) {
-  comm::Config config;
-  config.set_string("test.key", "value");
+  // Using singleton
+  config->set_string("test.key", "value");
   
-  EXPECT_TRUE(config.has_key("test.key"));
-  EXPECT_FALSE(config.has_key("test.nonexistent"));
+  EXPECT_TRUE(config->has_key("test.key"));
+  EXPECT_FALSE(config->has_key("test.nonexistent"));
   
-  EXPECT_TRUE(config.remove_key("test.key"));
-  EXPECT_FALSE(config.has_key("test.key"));
-  EXPECT_FALSE(config.remove_key("test.key"));  // Already removed
+  EXPECT_TRUE(config->remove_key("test.key"));
+  EXPECT_FALSE(config->has_key("test.key"));
+  EXPECT_FALSE(config->remove_key("test.key"));  // Already removed
 }
 
 TEST_F(ConfigTest, SaveAndLoadRoundtrip) {
-  comm::Config config1;
-  config1.set_string("app.name", "roundtrip_test");
-  config1.set_int("app.count", 123);
-  config1.set_bool("app.active", false);
+  // Using singleton
+  config->set_string("app.name", "roundtrip_test");
+  config->set_int("app.count", 123);
+  config->set_bool("app.active", false);
   
   auto save_path = test_dir / "roundtrip.toml";
-  auto save_err = config1.save_to_file(save_path);
+  auto save_err = config->save_to_file(save_path);
   ASSERT_EQ(save_err.value(), 0);
   ASSERT_TRUE(std::filesystem::exists(save_path));
   
-  comm::Config config2;
-  auto load_err = config2.load_from_file(save_path);
+  // Clear and reload
+  config->clear();
+  auto load_err = config->load_from_file(save_path);
   ASSERT_EQ(load_err.value(), 0);
   
-  EXPECT_EQ(config2.get_string("app.name"), "roundtrip_test");
-  EXPECT_EQ(config2.get_int("app.count"), 123);
-  EXPECT_EQ(config2.get_bool("app.active"), false);
+  EXPECT_EQ(config->get_string("app.name"), "roundtrip_test");
+  EXPECT_EQ(config->get_int("app.count"), 123);
+  EXPECT_EQ(config->get_bool("app.active"), false);
 }
 
 TEST_F(ConfigTest, MergeConfigurations) {
@@ -166,29 +174,29 @@ TEST_F(ConfigTest, MergeConfigurations) {
     enabled = true
   )");
 
-  comm::Config config;
-  [[maybe_unused]] auto err1 = config.load_from_file(test_dir / "base.toml");
-  [[maybe_unused]] auto err2 = config.merge_from_file(test_dir / "override.toml");
+  // Using singleton
+  [[maybe_unused]] auto err1 = config->load_from_file(test_dir / "base.toml");
+  [[maybe_unused]] auto err2 = config->merge_from_file(test_dir / "override.toml");
   
   // Original values
-  EXPECT_EQ(config.get_string("server.host"), "localhost");
-  EXPECT_EQ(config.get_string("database.host"), "db.local");
+  EXPECT_EQ(config->get_string("server.host"), "localhost");
+  EXPECT_EQ(config->get_string("database.host"), "db.local");
   
   // Overridden value
-  EXPECT_EQ(config.get_int("server.port"), 9090);
+  EXPECT_EQ(config->get_int("server.port"), 9090);
   
   // New values from override
-  EXPECT_EQ(config.get_bool("server.debug"), true);
-  EXPECT_EQ(config.get_bool("cache.enabled"), true);
+  EXPECT_EQ(config->get_bool("server.debug"), true);
+  EXPECT_EQ(config->get_bool("cache.enabled"), true);
 }
 
 TEST_F(ConfigTest, GetAllKeys) {
-  comm::Config config;
-  config.set_string("a.b.c", "value1");
-  config.set_int("a.b.d", 42);
-  config.set_string("x.y", "value2");
+  // Using singleton
+  config->set_string("a.b.c", "value1");
+  config->set_int("a.b.d", 42);
+  config->set_string("x.y", "value2");
   
-  auto keys = config.get_all_keys();
+  auto keys = config->get_all_keys();
   EXPECT_EQ(keys.size(), 3);
   
   EXPECT_NE(std::find(keys.begin(), keys.end(), "a.b.c"), keys.end());
@@ -197,35 +205,35 @@ TEST_F(ConfigTest, GetAllKeys) {
 }
 
 TEST_F(ConfigTest, ClearConfiguration) {
-  comm::Config config;
-  config.set_string("key1", "value1");
-  config.set_int("key2", 123);
+  // Using singleton
+  config->set_string("key1", "value1");
+  config->set_int("key2", 123);
   
-  EXPECT_EQ(config.get_all_keys().size(), 2);
+  EXPECT_EQ(config->get_all_keys().size(), 2);
   
-  config.clear();
-  EXPECT_EQ(config.get_all_keys().size(), 0);
-  EXPECT_FALSE(config.has_key("key1"));
-  EXPECT_FALSE(config.has_key("key2"));
+  config->clear();
+  EXPECT_EQ(config->get_all_keys().size(), 0);
+  EXPECT_FALSE(config->has_key("key1"));
+  EXPECT_FALSE(config->has_key("key2"));
 }
 
 TEST_F(ConfigTest, TypeMismatch) {
-  comm::Config config;
-  config.set_string("value", "not_a_number");
+  // Using singleton
+  config->set_string("value", "not_a_number");
   
-  EXPECT_FALSE(config.get_int("value").has_value());
-  EXPECT_FALSE(config.get_bool("value").has_value());
-  EXPECT_FALSE(config.get_double("value").has_value());
+  EXPECT_FALSE(config->get_int("value").has_value());
+  EXPECT_FALSE(config->get_bool("value").has_value());
+  EXPECT_FALSE(config->get_double("value").has_value());
   
-  EXPECT_TRUE(config.get_string("value").has_value());
+  EXPECT_TRUE(config->get_string("value").has_value());
 }
 
 TEST_F(ConfigTest, IntegerToDoubleConversion) {
-  comm::Config config;
-  config.set_int("number", 42);
+  // Using singleton
+  config->set_int("number", 42);
   
   // Should be able to get integer as double
-  auto as_double = config.get_double("number");
+  auto as_double = config->get_double("number");
   ASSERT_TRUE(as_double.has_value());
   EXPECT_DOUBLE_EQ(as_double.value(), 42.0);
 }
@@ -248,19 +256,19 @@ TEST_F(ConfigTest, XDGHierarchyLoading) {
   // Set XDG_CONFIG_HOME temporarily
   setenv("XDG_CONFIG_HOME", (test_dir / "user" / ".config").c_str(), 1);
 
-  comm::Config config;
-  auto err = config.load_xdg_hierarchy("myapp", system_dir / "config.toml");
+  // Using singleton
+  auto err = config->load_xdg_hierarchy("myapp", system_dir / "config.toml");
   
   ASSERT_EQ(err.value(), 0);
   
   // System value should be present
-  EXPECT_EQ(config.get_string("app.name"), "system_app");
+  EXPECT_EQ(config->get_string("app.name"), "system_app");
   
   // User value should override system value
-  EXPECT_EQ(config.get_int("app.version"), 2);
+  EXPECT_EQ(config->get_int("app.version"), 2);
   
   // User-only value should be present
-  EXPECT_EQ(config.get_bool("app.debug"), true);
+  EXPECT_EQ(config->get_bool("app.debug"), true);
   
   unsetenv("XDG_CONFIG_HOME");
 }
