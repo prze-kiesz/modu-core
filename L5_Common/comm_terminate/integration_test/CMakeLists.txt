@@ -54,7 +54,7 @@ target_include_directories(${INTEGRATION_TEST_TARGET}
 #
 add_test(
     NAME ${INTEGRATION_TEST_TARGET}
-    COMMAND bash -c "${CMAKE_CURRENT_BINARY_DIR}/${INTEGRATION_TEST_TARGET} > /tmp/test_sighup.log 2>&1 & PID=$$!; sleep 2; kill -SIGHUP $$PID; sleep 2; kill -SIGTERM $$PID; wait $$PID"
+    COMMAND bash -c "${CMAKE_CURRENT_BINARY_DIR}/${INTEGRATION_TEST_TARGET} > /tmp/test_sighup.log 2>&1 & PID=\$!; sleep 2; kill -SIGHUP \$PID; sleep 2; kill -SIGTERM \$PID; wait \$PID"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 set_tests_properties(${INTEGRATION_TEST_TARGET} PROPERTIES TIMEOUT 15)
