@@ -1,0 +1,33 @@
+# Example configuration for modu-core application
+# SPDX-License-Identifier: BSD-2-Clause
+# SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
+
+# Application metadata
+[app]
+name = "modu-core"
+version = 1
+debug = false
+
+# Logging configuration
+[logging]
+level = "info"              # debug, info, warning, error
+destination = "syslog"      # syslog, file, console
+log_dir = "/var/log/modu-core"
+
+# System configuration
+[system]
+worker_threads = 4
+max_connections = 1000
+timeout_seconds = 30.0
+
+# Feature flags
+[features]
+enable_metrics = true
+enable_profiling = false
+experimental = []
+
+# Service endpoints
+[services]
+api_port = 8080
+admin_port = 8081
+health_check_interval = 5
