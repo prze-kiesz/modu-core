@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <atomic>
 #include <condition_variable>
 #include <csignal>
 #include <functional>
@@ -84,8 +83,8 @@ class Terminate {
   /// Condition variable for event queue notifications
   std::condition_variable m_event_cv;
   
-  /// Flag to stop event processor thread
-  std::atomic<bool> m_stop_event_processor{false};
+  /// Flag to stop event processor thread (protected by m_event_mutex)
+  bool m_stop_event_processor{false};
 
   /// Registered callbacks for configuration reload notifications
   std::vector<std::function<void()>> m_config_reload_listeners;
