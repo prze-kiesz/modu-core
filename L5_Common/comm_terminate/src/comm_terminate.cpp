@@ -255,60 +255,64 @@ void Terminate::RegisterConfigReloadListener(std::function<void()> callback) {
 void Terminate::ProcessEvents() {
   LOG(INFO) << "Event processor thread started";
   
-  while (!m_stop_event_processor) {
+  while (true) {
     std::unique_lock<std::mutex> lock(m_event_mutex);
     
-    // Wait for events to be queued
+    // Wait for events to be queued or stop request
     m_event_cv.wait(lock, [this] {
       return !m_event_queue.empty() || m_stop_event_processor;
     });
     
-    // Process all queued events
-    while (!m_event_queue.empty()) {
-      EventType event = m_event_queue.front();
-      m_event_queue.pop();
-      
-      // Release lock while processing to avoid blocking signal handler
-      lock.unlock();
-      
-      // Handle event based on type
-      switch (event) {
-        case EventType::ConfigReload: {
-          LOG(INFO) << "Processing ConfigReload event, invoking listeners";
-          
-          // Copy listeners under lock to avoid holding lock during callbacks
-          std::vector<std::function<void()>> listeners_copy;
-          {
-            std::lock_guard<std::mutex> listeners_lock(m_listeners_mutex);
-            listeners_copy = m_config_reload_listeners;
-          }
-          
-          // Invoke all registered listeners without holding lock
-          for (const auto& listener : listeners_copy) {
-            try {
-              listener();
-            } catch (const std::exception& e) {
-              LOG(ERROR) << "Exception in config reload listener: " << e.what();
-            } catch (...) {
-              LOG(ERROR) << "Unknown exception in config reload listener";
-            }
-          }
-          
-          LOG(INFO) << "Config reload event processed, invoked " << listeners_copy.size() << " listeners";
-          
-          // Notify systemd that reload is complete and we're ready again
-          sd_notify(0, "READY=1");
-          break;
+    // If stop was requested and there are no more events, exit the loop
+    if (m_stop_event_processor && m_event_queue.empty()) {
+      break;
+    }
+    
+    // Process next queued event (queue is non-empty here)
+    EventType event = m_event_queue.front();
+    m_event_queue.pop();
+    
+    // Handle event based on type
+    switch (event) {
+      case EventType::ConfigReload: {
+        LOG(INFO) << "Processing ConfigReload event, invoking listeners";
+        
+        // Release event mutex while processing to avoid blocking signal handler
+        lock.unlock();
+        
+        // Copy listeners under lock to avoid holding lock during callbacks
+        std::vector<std::function<void()>> listeners_copy;
+        {
+          std::lock_guard<std::mutex> listeners_lock(m_listeners_mutex);
+          listeners_copy = m_config_reload_listeners;
         }
         
-        case EventType::Shutdown:
-          LOG(INFO) << "Processing Shutdown event, event processor will exit";
-          m_stop_event_processor = true;
-          break;  // Exit loop, will log at line 297
+        // Invoke all registered listeners without holding lock
+        for (const auto& listener : listeners_copy) {
+          try {
+            listener();
+          } catch (const std::exception& e) {
+            LOG(ERROR) << "Exception in config reload listener: " << e.what();
+          } catch (...) {
+            LOG(ERROR) << "Unknown exception in config reload listener";
+          }
+        }
+        
+        LOG(INFO) << "Config reload event processed, invoked " << listeners_copy.size() << " listeners";
+        
+        // Notify systemd that reload is complete and we're ready again
+        sd_notify(0, "READY=1");
+        break;
       }
       
-      // Re-acquire lock for next iteration
-      lock.lock();
+      case EventType::Shutdown:
+        LOG(INFO) << "Processing Shutdown event, event processor will exit";
+        // Protect the stop flag update with m_event_mutex
+        m_stop_event_processor = true;
+        // Release the mutex before exiting to avoid blocking other threads
+        lock.unlock();
+        LOG(INFO) << "Event processor thread exiting";
+        return;
     }
   }
   
