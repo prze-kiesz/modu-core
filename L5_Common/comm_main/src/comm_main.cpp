@@ -10,6 +10,7 @@
 #include "comm_main.h"
 
 #include <glog/logging.h>
+#include "comm_config_toml.h"
 #include "comm_terminate.h"
 
 namespace comm {
@@ -36,24 +37,53 @@ const std::error_category& getInitErrorCategory() noexcept {
 // Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
-std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
-  // TODO: Future expansion - use argc/argv for configuration file path or command-line options
-  // TODO: Add Config module initialization when implemented
+std::error_code Main::init(int argc, const char* argv[]) {  // NOLINT
+  // Initialize configuration system as first module
+  auto config_init = Config::Instance().Initialize();
+  if (config_init) {
+    LOG(ERROR) << "Failed to initialize Config module: " << config_init.message();
+    return config_init;
+  }
 
-  // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT)
+  // Load configuration file (default or from command line)
+  // TODO: Parse argc/argv for --config or -c flag
+  std::string config_path = "/etc/modu-core/config.toml";  // Default path
+  if (argc > 1) {
+    // Simple argument parsing - first argument is config path
+    config_path = argv[1];
+  }
+  
+  auto config_load = Config::Instance().Load(config_path);
+  if (config_load) {
+    LOG(WARNING) << "Failed to load config from " << config_path << ": " << config_load.message();
+    LOG(WARNING) << "Continuing with default configuration";
+  } else {
+    LOG(INFO) << "Configuration loaded from: " << config_path;
+  }
+
+  // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT, SIGHUP)
   auto ret_code = Terminate::Instance().Start();
   if (ret_code) {
     LOG(ERROR) << "Failed to start Terminate::instance().start(): " << ret_code.message();
     return ret_code;
   }
-
+  // Register config reload listener for SIGHUP handling
+  Terminate::Instance().RegisterConfigReloadListener([]() {
+    LOG(INFO) << "SIGHUP received - reloading configuration";
+    auto reload_result = Config::Instance().Reload();
+    if (reload_result) {
+      LOG(ERROR) << "Failed to reload configuration: " << reload_result.message();
+    } else {
+      LOG(INFO) << "Configuration reloaded successfully";
+    }
+  });
   LOG(INFO) << "Common layer (L5) initialization completed successfully";
   return {};  // Success - empty error_code
 }
 
 std::error_code Main::deinit() {
-  // TODO: Add deinitialization logic for Common layer modules when needed
-  // Currently no cleanup is required as Terminate is handled by waitForTermination()
+  // Note: Config and Terminate are singletons - cleanup happens automatically at program exit
+  // No explicit deinitialization needed
   
   LOG(INFO) << "Common layer (L5) deinitialization completed successfully";
   return {};  // Success - empty error_code
