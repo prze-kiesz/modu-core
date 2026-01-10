@@ -110,6 +110,43 @@ TEST_F(TerminateTest, ErrorCategoryIsSingleton) {
 }
 
 /**
+ * @brief Test config reload listener registration
+ */
+TEST_F(TerminateTest, RegisterConfigReloadListenerAddsCallback) {
+  int call_count = 0;
+  
+  // Register a simple listener that increments a counter
+  Terminate::Instance().RegisterConfigReloadListener([&call_count]() {
+    call_count++;
+  });
+  
+  // We can't easily test the invocation without starting the full signal handling
+  // machinery, but we can verify the registration doesn't crash
+  EXPECT_EQ(call_count, 0) << "Listener should not be invoked during registration";
+}
+
+/**
+ * @brief Test multiple config reload listeners can be registered
+ */
+TEST_F(TerminateTest, MultipleListenersCanBeRegistered) {
+  int call_count1 = 0;
+  int call_count2 = 0;
+  
+  // Register multiple listeners
+  Terminate::Instance().RegisterConfigReloadListener([&call_count1]() {
+    call_count1++;
+  });
+  
+  Terminate::Instance().RegisterConfigReloadListener([&call_count2]() {
+    call_count2++;
+  });
+  
+  // Registration should succeed without errors
+  EXPECT_EQ(call_count1, 0);
+  EXPECT_EQ(call_count2, 0);
+}
+
+/**
  * @brief Main function for running tests
  */
 int main(int argc, char** argv) {

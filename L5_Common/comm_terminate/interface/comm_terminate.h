@@ -3,12 +3,17 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <csignal>
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <semaphore>
 #include <string>
 #include <system_error>
 #include <thread>
+#include <vector>
 
 namespace comm {
 
@@ -45,17 +50,47 @@ inline std::error_code make_error_code(TerminateError err) noexcept {
 
 class Terminate {
  private:
-  /// Worker thread that waits for termination signals (SIGINT, SIGTERM, SIGQUIT)
+  /// Worker thread that waits for termination signals (SIGINT, SIGTERM, SIGQUIT, SIGHUP)
   std::unique_ptr<std::thread> m_signal_wait;
+  
+  /// Event processing thread that invokes config reload listeners
+  std::unique_ptr<std::thread> m_event_processor;
+  
   /// Binary semaphore for synchronization between signal handler and main thread (C++20)
   std::binary_semaphore m_terminate;
+  
   /// Delay in milliseconds before final termination (set once, read in destructor)
   uint32_t m_wait_ms;
 
-  /// Set of signals to handle (SIGINT, SIGTERM, SIGQUIT)
+  /// Set of signals to handle (SIGINT, SIGTERM, SIGQUIT, SIGHUP)
   sigset_t m_waited_signals;
+  
   /// Human-readable termination reason (synchronized via m_terminate semaphore)
   std::string m_terminate_reason;
+
+  /// Event types for internal processing
+  enum class EventType {
+    ConfigReload,  ///< SIGHUP received - reload configuration
+    Shutdown       ///< Shutdown event processor thread
+  };
+
+  /// Event queue for async processing (signal handler -> event processor thread)
+  std::queue<EventType> m_event_queue;
+  
+  /// Mutex protecting event queue
+  std::mutex m_event_mutex;
+  
+  /// Condition variable for event queue notifications
+  std::condition_variable m_event_cv;
+  
+  /// Flag to stop event processor thread (protected by m_event_mutex)
+  bool m_stop_event_processor{false};
+
+  /// Registered callbacks for configuration reload notifications
+  std::vector<std::function<void()>> m_config_reload_listeners;
+  
+  /// Mutex protecting config reload listeners vector
+  std::mutex m_listeners_mutex;
 
   /**
    * @brief Initializes signal set and semaphore for graceful shutdown handling
@@ -70,11 +105,18 @@ class Terminate {
   ~Terminate();
 
   /**
-   * @brief Waits for termination signal (SIGINT/SIGTERM/SIGQUIT) in dedicated thread
-   * @details Notifies systemd when ready, blocks on sigwait(), then signals termination
+   * @brief Waits for termination signal (SIGINT/SIGTERM/SIGQUIT/SIGHUP) in dedicated thread
+   * @details Notifies systemd when ready, blocks on sigwait(), handles SIGHUP for config reload
    * @note Runs in m_signal_wait thread, not main thread
    */
   void WaitForTerminateSignal();
+
+  /**
+   * @brief Event processor thread - handles config reload notifications
+   * @details Processes events from queue and invokes registered listeners
+   * @note Runs in m_event_processor thread, separate from signal handler
+   */
+  void ProcessEvents();
 
  public:
   /**
@@ -89,11 +131,29 @@ class Terminate {
 
   /**
    * @brief Starts the termination handler by blocking signals and spawning worker thread
-   * @details Blocks SIGINT/SIGTERM/SIGQUIT in main thread and creates dedicated signal handler thread
+   * @details Blocks SIGINT/SIGTERM/SIGQUIT/SIGHUP in main thread and creates dedicated signal handler thread
    * @return std::error_code - empty on success, error code on failure
    * @note Must be called before WaitForTermination()
    */
   std::error_code Start();
+
+  /**
+   * @brief Register a callback to be invoked when configuration is reloaded (SIGHUP)
+   * @param callback Function to call when SIGHUP signal is received
+   * @details Callback is invoked from event processor thread, not signal handler
+   * @note Thread-safe, can be called from any thread
+   * @note If registered during active reload processing, the listener may not be
+   *       invoked for that specific reload event, but will be called for subsequent reloads
+   * 
+   * Example usage:
+   * @code
+   *   Terminate::Instance().RegisterConfigReloadListener([]() {
+   *     LOG(INFO) << "Config reloaded, updating module state";
+   *     MyModule::instance().reload_settings();
+   *   });
+   * @endcode
+   */
+  void RegisterConfigReloadListener(std::function<void()> callback);
 
   /**
    * @brief Programmatically triggers application termination (alternative to external signals)
