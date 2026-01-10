@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.22)
 ###############
 # Module configuration
 #
-set(MODULE_NAME "comm_main")
+set(MODULE_NAME "comm_config-toml")
 set(MODULE_TARGET "${PROJECT_NAME}-${MODULE_NAME}")
 
 message(STATUS "Building module: ${MODULE_NAME}")
@@ -15,11 +15,11 @@ message(STATUS "Building module: ${MODULE_NAME}")
 # Source files
 #
 set(MODULE_SOURCES
-    src/comm_main.cpp
+    src/comm_config_toml.cpp
 )
 
 set(MODULE_HEADERS
-    interface/comm_main.h
+    interface/comm_config_toml.h
 )
 
 ###############
@@ -49,8 +49,6 @@ target_include_directories(${MODULE_TARGET}
 #
 target_link_libraries(${MODULE_TARGET}
     PRIVATE
-        ${PROJECT_NAME}-comm_config-toml
-        ${PROJECT_NAME}-comm_terminate
         glog::glog
 )
 
@@ -58,8 +56,7 @@ target_link_libraries(${MODULE_TARGET}
 # Unit tests (if testing is enabled)
 #
 if(BUILD_TESTING)
-    # TODO: Add unit tests
-    # add_subdirectory(tests)
+    add_subdirectory(unit_test)
 endif()
 
 ###############
@@ -76,3 +73,4 @@ install(TARGETS ${MODULE_TARGET}
 install(FILES ${MODULE_HEADERS}
     DESTINATION include/${MODULE_NAME}
 )
+
