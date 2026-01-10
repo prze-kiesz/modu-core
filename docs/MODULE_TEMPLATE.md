@@ -137,6 +137,21 @@ target_link_libraries(${MODULE_TARGET}
 if(BUILD_TESTING)
     add_subdirectory(unit_test)
 endif()
+
+###############
+# Installation
+#
+install(TARGETS ${MODULE_TARGET}
+    EXPORT ${MODULE_NAME}Targets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+
+install(FILES ${MODULE_HEADERS}
+    DESTINATION include/${MODULE_NAME}
+)
 ```
 
 ---
@@ -311,54 +326,62 @@ std::error_code ModuleName::Initialize() {
 # SPDX-License-Identifier: BSD-2-Clause
 # SPDX-FileCopyrightText: 2026 Przemek Kieszkowski
 
-cmake_minimum_required(VERSION 3.22)
+###############
+# Unit tests for module_name module
+###############
+
+set(TEST_TARGET "${MODULE_TARGET}_unittest")
 
 ###############
-# Unit tests configuration
+# Test source files
 #
-message(STATUS "Configured unit tests for ${MODULE_NAME}")
-
-###############
-# Test executable
-#
-add_executable(${MODULE_TARGET}_unittest
+set(TEST_SOURCES
     module_name_test.cpp
+    # Include module source directly to avoid linking issues with OBJECT library
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/module_name.cpp
 )
 
 ###############
-# Include directories
+# Create test executable
 #
-target_include_directories(${MODULE_TARGET}_unittest
+add_executable(${TEST_TARGET}
+    ${TEST_SOURCES}
+)
+
+###############
+# Link with module and dependencies
+#
+target_link_libraries(${TEST_TARGET}
+    PRIVATE
+        GTest::gtest_main
+        GTest::gmock
+        glog::glog
+        # Add other dependencies here (e.g., systemd, Threads::Threads)
+)
+
+###############
+# Include directories for tests
+#
+target_include_directories(${TEST_TARGET}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../interface
-)
-
-###############
-# Link test libraries
-#
-target_link_libraries(${MODULE_TARGET}_unittest
-    PRIVATE
-        GTest::gtest
-        GTest::gtest_main
-        glog::glog
-        # Add other dependencies here
-)
-
-###############
-# Set C++ standard
-#
-set_target_properties(${MODULE_TARGET}_unittest PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
-    CXX_EXTENSIONS OFF
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
 
 ###############
 # Register tests with CTest
 #
 include(GoogleTest)
-gtest_discover_tests(${MODULE_TARGET}_unittest)
+gtest_discover_tests(${TEST_TARGET}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    PROPERTIES
+        TIMEOUT 10
+)
+
+# Also add as a manual test
+add_test(NAME ${TEST_TARGET} COMMAND ${TEST_TARGET})
+
+message(STATUS "Configured unit tests for ${MODULE_NAME}")
 ```
 
 ---
