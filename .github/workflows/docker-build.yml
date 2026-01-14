@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.devcontainer/Dockerfile'
+      - '.devcontainer/devcontainer.json'
+      - '.github/workflows/docker-build.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - '.devcontainer/Dockerfile'
+      - '.devcontainer/devcontainer.json'
   release:
     types: [published]
   workflow_dispatch:
@@ -49,12 +56,12 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            # Tag with branch name (e.g., main, feature-comm-config-toml-module)
+            # Tag with branch name
             type=ref,event=branch
-            # Tag with PR number (e.g., pr-7)
+            # Tag with PR number
             type=ref,event=pr
-            # Tag with git short SHA (e.g., sha-abc123)
-            type=sha
+            # Tag with git short SHA
+            type=sha,prefix={{branch}}-
           labels: |
             org.opencontainers.image.title=modu-core Development Container
             org.opencontainers.image.description=Linux build environment with C++20, CMake, glog, GoogleTest, clang-19
