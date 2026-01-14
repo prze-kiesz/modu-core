@@ -111,7 +111,7 @@ RUN wget https://apt.llvm.org/llvm.sh && \
 # Build and install toml11 (header-only TOML v1.0.0 library) from source
 RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml11 && \
     cd /tmp/toml11 && \
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 && \
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DTOML11_INSTALL=ON && \
     cmake --install build && \
     rm -rf /tmp/toml11
 
