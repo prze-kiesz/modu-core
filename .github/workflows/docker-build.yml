@@ -56,12 +56,12 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            # Tag with branch name
+            # Tag with branch name (e.g., main, feature-comm-config-toml-module)
             type=ref,event=branch
-            # Tag with PR number
+            # Tag with PR number (e.g., pr-7)
             type=ref,event=pr
-            # Tag with git short SHA
-            type=sha,prefix={{branch}}-
+            # Tag with git short SHA (e.g., sha-abc123)
+            type=sha
           labels: |
             org.opencontainers.image.title=modu-core Development Container
             org.opencontainers.image.description=Linux build environment with C++20, CMake, glog, GoogleTest, clang-19
