@@ -22,12 +22,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/prze-kiesz/modu-core:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-      options: --user root
     
     strategy:
       matrix:
@@ -41,24 +35,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure CMake
-        run: |
-          mkdir -p build
-          cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DBUILD_TESTING=ON \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-
-      - name: Build
-        run: |
-          cd build
-          make -j$(nproc)
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure --verbose
+      - name: Build and run in Dev Container
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: |
+            mkdir -p build
+            cd build
+            cmake .. \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+              -DBUILD_TESTING=ON \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            make -j$(nproc)
+            ctest --output-on-failure --verbose
 
       - name: Upload test results
         if: always()
