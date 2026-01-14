@@ -8,7 +8,9 @@
  */
 
 #include "infr_main.h"
+#include "infr_config.h"
 
+#include <comm_config_toml.h>
 #include <glog/logging.h>
 
 namespace infr {
@@ -38,6 +40,32 @@ Main::Main() = default;
 std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   // TODO: Future expansion - use argc/argv for configuration file path or command-line options
   // TODO: Add infrastructure layer modules initialization when implemented
+  
+  try {
+    // Get configuration singleton (already loaded by comm_main or earlier)
+    auto& config = comm::Config::Instance();
+    
+    // Check if configuration is initialized
+    if (!config.IsInitialized()) {
+      LOG(ERROR) << "Configuration not initialized";
+      return makeErrorCode(InitError::MODULE_INIT_FAILED);
+    }
+    
+    // Read infr_main configuration from "infrastructure" section
+    auto infr_config = config.Get<infr::InfrMainConfig>("infrastructure");
+    
+    // Use configuration values
+    LOG(INFO) << "Device name: " << infr_config.device_name;
+    LOG(INFO) << "Port: " << infr_config.port;
+    LOG(INFO) << "Logging enabled: " << infr_config.enable_logging;
+    LOG(INFO) << "Timeout: " << infr_config.timeout_seconds << "s";
+    
+    LOG(INFO) << "Infrastructure layer (L4) initialization completed successfully";
+    return {};
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Config load failed: " << e.what();
+      return makeErrorCode(InitError::MODULE_INIT_FAILED);
+  }
 
   LOG(INFO) << "Infrastructure layer (L4) initialization completed successfully";
   return {};  // Success - empty error_code

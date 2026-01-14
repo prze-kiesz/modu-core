@@ -16,6 +16,7 @@ message(STATUS "Building module: ${MODULE_NAME}")
 #
 set(MODULE_SOURCES
     src/infr_main.cpp
+    src/infr_config.cpp
 )
 
 set(MODULE_HEADERS
@@ -42,6 +43,7 @@ target_include_directories(${MODULE_TARGET}
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 ###############

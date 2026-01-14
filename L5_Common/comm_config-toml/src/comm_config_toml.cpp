@@ -56,10 +56,19 @@ std::error_code Config::Initialize() {
 std::error_code Config::Load(const std::string& config_path) {
   LOG(INFO) << "Config::Load() called with path: " << config_path;
   
-  // TODO: Implement TOML file loading logic
-  
-  m_config_path = config_path;
-  return make_error_code(ConfigError::Success);
+  try {
+    m_data = toml::parse(config_path);
+    m_config_path = config_path;
+    m_initialized = true;
+    LOG(INFO) << "Successfully loaded TOML configuration from: " << config_path;
+    return make_error_code(ConfigError::Success);
+  } catch (const toml::syntax_error& e) {
+    LOG(ERROR) << "TOML parse error: " << e.what();
+    return make_error_code(ConfigError::ParseError);
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Failed to load config file: " << e.what();
+    return make_error_code(ConfigError::FileNotFound);
+  }
 }
 
 std::error_code Config::Reload() {
@@ -70,13 +79,15 @@ std::error_code Config::Reload() {
     return make_error_code(ConfigError::NotInitialized);
   }
   
-  // TODO: Implement reload logic
-  
-  return make_error_code(ConfigError::Success);
+  return Load(m_config_path);
 }
 
 bool Config::IsInitialized() const {
   return m_initialized;
+}
+
+const toml::value& Config::GetData() const {
+  return m_data;
 }
 
 }  // namespace comm
