@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.22)
 ###############
 # Module configuration
 #
-set(MODULE_NAME "infr_main")
+set(MODULE_NAME "comm_config-toml")
 set(MODULE_TARGET "${PROJECT_NAME}-${MODULE_NAME}")
 
 message(STATUS "Building module: ${MODULE_NAME}")
@@ -15,12 +15,11 @@ message(STATUS "Building module: ${MODULE_NAME}")
 # Source files
 #
 set(MODULE_SOURCES
-    src/infr_main.cpp
-    src/infr_config.cpp
+    src/comm_config_toml.cpp
 )
 
 set(MODULE_HEADERS
-    interface/infr_main.h
+    interface/comm_config_toml.h
 )
 
 ###############
@@ -39,8 +38,7 @@ target_compile_features(${MODULE_TARGET} PUBLIC cxx_std_20)
 #
 target_include_directories(${MODULE_TARGET}
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-        $<INSTALL_INTERFACE:include>
+        ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_INCLUDE_DIRECTORIES>
@@ -49,17 +47,15 @@ target_include_directories(${MODULE_TARGET}
 ###############
 # Dependencies
 #
-target_link_libraries(${MODULE_TARGET}
-    PRIVATE
-        glog::glog
+target_link_libraries(${MODULE_TARGET} LINK_PRIVATE
+    glog::glog
 )
 
 ###############
 # Unit tests (if testing is enabled)
 #
 if(BUILD_TESTING)
-    # TODO: Add unit tests
-    # add_subdirectory(tests)
+    add_subdirectory(unit_test)
 endif()
 
 ###############
@@ -76,3 +72,4 @@ install(TARGETS ${MODULE_TARGET}
 install(FILES ${MODULE_HEADERS}
     DESTINATION include/${MODULE_NAME}
 )
+
