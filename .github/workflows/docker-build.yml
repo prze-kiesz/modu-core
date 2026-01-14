@@ -4,16 +4,9 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.devcontainer/Dockerfile'
-      - '.devcontainer/devcontainer.json'
-      - '.github/workflows/docker-build.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - '.devcontainer/Dockerfile'
-      - '.devcontainer/devcontainer.json'
   release:
     types: [published]
   workflow_dispatch:
