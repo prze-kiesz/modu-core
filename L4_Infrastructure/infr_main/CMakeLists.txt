@@ -49,12 +49,9 @@ target_include_directories(${MODULE_TARGET}
 ###############
 # Dependencies
 #
-find_package(toml11 REQUIRED)
-
 target_link_libraries(${MODULE_TARGET}
     PRIVATE
         glog::glog
-        toml11::toml11
 )
 
 ###############
