@@ -60,10 +60,8 @@ jobs:
             type=ref,event=branch
             # Tag with PR number
             type=ref,event=pr
-            # Tag with git short SHA for branches (e.g., feature/config-sha-abc123)
-            type=sha,prefix={{branch}}-sha-,event=branch,enable={{is_default_branch == false}}
-            # Tag with git short SHA for main (e.g., main-sha-abc123)
-            type=sha,prefix=main-sha-,event=branch,enable={{is_default_branch}}
+            # Tag with git short SHA for branches (e.g., main-sha-abc123, feature/config-sha-abc123)
+            type=sha,prefix={{branch}}-sha-,event=branch
             # Tag with git short SHA for PRs (e.g., pr-7-sha-abc123)
             type=sha,prefix=pr-{{number}}-sha-,event=pr
           labels: |
