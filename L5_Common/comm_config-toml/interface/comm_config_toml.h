@@ -15,6 +15,7 @@
 #include <system_error>
 #include <type_traits>
 #include <vector>
+#include <toml.hpp>
 
 namespace comm {
 
@@ -98,12 +99,42 @@ class Config {
    */
   bool IsInitialized() const;
 
+  /**
+   * @brief Get parsed TOML data
+   * @return Reference to parsed TOML table
+   */
+  const toml::value& GetData() const;
+
+  /**
+   * @brief Get configuration value of type T from specified path
+   * @tparam T Type to deserialize (must have from_toml function in its namespace)
+   * @param path Key path in TOML
+   * @return Deserialized value
+   */
+  template <typename T>
+  T Get(const std::string& path) const {
+    T result;
+    try {
+      if (m_data.is_table() && m_data.contains(path)) {
+        const auto& section = toml::find(m_data, path);
+        from_toml(section, result);  // ADL will find the appropriate from_toml
+      } else {
+        // Section not found, result will have default values
+        from_toml(toml::value{}, result);  // Pass empty toml::value to trigger defaults
+      }
+    } catch (const std::exception&) {
+      // On any error, result will have default values from from_toml
+    }
+    return result;
+  }
+
  private:
   Config();
   ~Config() = default;
 
   bool m_initialized{false};
   std::string m_config_path;
+  toml::value m_data;
 };
 
 /**
@@ -135,7 +166,9 @@ struct toml_serializer;
  * @param value Value to serialize
  */
 template <typename T>
-void to_toml(const Config& config, const std::string& path, const T& value);
+void to_toml(const Config& config, const std::string& path, const T& value) {
+  toml_serializer<T>::to_toml(config, path, value);
+}
 
 /**
  * @brief Helper to deserialize value from TOML
@@ -145,20 +178,22 @@ void to_toml(const Config& config, const std::string& path, const T& value);
  * @return Deserialized value
  */
 template <typename T>
-T from_toml(const Config& config, const std::string& path);
+T from_toml(const Config& config, const std::string& path) {
+  return toml_serializer<T>::from_toml(config, path);
+}
 
 /**
  * @brief Macro to define serialization for simple structs
  * @example
  * COMM_CONFIG_DEFINE_STRUCT(ServerConfig, port, host, timeout)
  */
-#define COMM_CONFIG_DEFINE_STRUCT(Type, ...)                                   \
+#define COMM_CONFIG_DEFINE_STRUCT(Type, ...)                                    \
   namespace comm {                                                              \
   template <>                                                                   \
-  struct toml_serializer<Type> {                                               \
-    static void to_toml(const Config& config, const std::string& path,        \
+  struct toml_serializer<Type> {                                                \
+    static void to_toml(const Config& config, const std::string& path,          \
                         const Type& value);                                     \
-    static Type from_toml(const Config& config, const std::string& path);     \
+    static Type from_toml(const Config& config, const std::string& path);       \
   };                                                                            \
   }
 

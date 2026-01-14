@@ -38,18 +38,17 @@ target_compile_features(${MODULE_TARGET} PUBLIC cxx_std_20)
 #
 target_include_directories(${MODULE_TARGET}
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/interface>
-        $<INSTALL_INTERFACE:include>
+        ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 ###############
 # Dependencies
 #
-target_link_libraries(${MODULE_TARGET}
-    PRIVATE
-        glog::glog
+target_link_libraries(${MODULE_TARGET} LINK_PRIVATE
+    glog::glog
 )
 
 ###############
