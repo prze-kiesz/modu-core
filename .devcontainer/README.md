@@ -68,12 +68,70 @@ docker build -t modu-core-dev .
 
 ## Available Tags
 
-The Docker image is automatically built and tagged by GitHub Actions:
+The Docker image is automatically built and tagged by GitHub Actions with semantic versioning.
 
-- `latest` - Latest build from main branch
-- `main-<sha>` - Specific commit from main branch
-- `v1.0.0`, `v1.0`, `v1` - Semantic version tags (on releases)
-- `pr-<number>` - Pull request builds (not pushed to registry)
+### Version Management
+
+Version format: `x.y.z` where:
+- `x.y` - Major.Minor version stored in `.devcontainer/VERSION` file
+- `z` - Patch number, auto-incremented based on existing git tags
+
+**To bump version:**
+1. Edit `.devcontainer/VERSION` (e.g., change `1.0` to `1.1`)
+2. Commit and merge to main
+3. Next build will start at `1.1.0`
+
+### Main Branch Tags
+
+When changes are merged to `main`:
+- `latest` - Always points to the newest build
+- `x.y.z` - Full semantic version (e.g., `1.0.3`)
+- `x.y` - Minor version, tracks latest patch (e.g., `1.0` → `1.0.3`)
+- `main` - Main branch identifier
+- `sha-abc123` - Specific commit hash
+- **Git tag created:** `vx.y.z` (e.g., `v1.0.3`)
+
+**Example progression:**
+```
+VERSION=1.0, first build  → 1.0.0, 1.0, latest, main, sha-xxx
+VERSION=1.0, second build → 1.0.1, 1.0, latest, main, sha-yyy
+VERSION=1.1, first build  → 1.1.0, 1.1, latest, main, sha-zzz
+```
+
+### Branch Tags
+
+Feature branches (e.g., `feature/new-module`):
+- `feature-new-module` - Branch name (slashes become hyphens)
+- `sha-def456` - Commit hash
+
+### Pull Request Tags
+
+Pull requests (e.g., PR #7):
+- `pr-7` - PR number
+- `sha-ghi789` - Commit hash
+
+**Note:** PR images are built but not pushed to registry (build verification only).
+
+### Multi-Architecture Support
+
+Currently supports: `linux/amd64`
+
+**To enable multi-arch builds**, edit `.github/workflows/docker-build.yml`:
+```yaml
+platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/riscv64
+```
+
+**Using multi-arch images:**
+```bash
+# Docker automatically pulls the correct architecture
+docker pull ghcr.io/prze-kiesz/modu-core:latest
+
+# Explicitly specify platform
+docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:1.0.5
+
+# View available architectures
+docker manifest inspect ghcr.io/prze-kiesz/modu-core:latest
+```
 
 ## Image Metadata
 
