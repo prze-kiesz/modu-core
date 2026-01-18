@@ -47,10 +47,28 @@ RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
     crossbuild-essential-arm64 \
     openssh-client 
 
-# Install additional tools
+# Install additional tools and CLI utilities
 RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
     ccache \
-    lsb-release wget software-properties-common gnupg libsystemd-dev
+    lsb-release wget software-properties-common gnupg libsystemd-dev \
+    jq \
+    tree \
+    htop \
+    file \
+    less \
+    iputils-ping \
+    netcat-openbsd \
+    dnsutils
+
+# Install GitHub CLI (gh)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt update && apt install -y gh
+
+# Install yq (YAML processor)
+RUN wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
+    chmod +x /usr/local/bin/yq
 
 # Set locales
 RUN apt update && apt install -y locales && \

@@ -65,6 +65,12 @@ docker build -t modu-core-dev .
 - curl, wget - Download tools
 - unzip - Archive extraction
 - autoconf, automake, libtool - Build system tools
+- **gh** - GitHub CLI for repository management
+- **jq** - JSON processor for parsing API responses
+- **yq** - YAML processor for configuration files
+- **tree** - Directory structure visualization
+- **htop** - Interactive process viewer
+- **iputils-ping, netcat, dnsutils** - Networking tools
 
 ## Available Tags
 
@@ -89,13 +95,15 @@ When changes are merged to `main`:
 - `x.y` - Minor version, tracks latest patch (e.g., `1.0` → `1.0.3`)
 - `main` - Main branch identifier
 - `sha-abc123` - Specific commit hash
-- **Git tag created:** `vx.y.z` (e.g., `v1.0.3`)
+- **Git tag created:** `docker_vx.y.z` (e.g., `docker_v1.0.3`)
+
+The `docker_v` prefix distinguishes Docker image versions from system releases.
 
 **Example progression:**
 ```
-VERSION=1.0, first build  → 1.0.0, 1.0, latest, main, sha-xxx
-VERSION=1.0, second build → 1.0.1, 1.0, latest, main, sha-yyy
-VERSION=1.1, first build  → 1.1.0, 1.1, latest, main, sha-zzz
+VERSION=1.0, first build  → 1.0.0, 1.0, latest, main, sha-xxx (git tag: docker_v1.0.0)
+VERSION=1.0, second build → 1.0.1, 1.0, latest, main, sha-yyy (git tag: docker_v1.0.1)
+VERSION=1.1, first build  → 1.1.0, 1.1, latest, main, sha-zzz (git tag: docker_v1.1.0)
 ```
 
 ### Branch Tags
@@ -132,6 +140,8 @@ docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:1.0.0
 # View available architectures
 docker manifest inspect ghcr.io/prze-kiesz/modu-core:latest
 ```
+
+**Note:** Docker image tags (e.g., `1.0.0`) refer to the semantic version without prefix. Git tags use `docker_v` prefix (e.g., `docker_v1.0.0`).
 
 ## Image Metadata
 

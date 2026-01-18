@@ -121,7 +121,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          TAG="v${{ steps.version.outputs.full }}"
+          TAG="docker_v${{ steps.version.outputs.full }}"
           
           # Fetch latest tags to check for concurrent builds
           git fetch --tags origin
