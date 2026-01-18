@@ -50,7 +50,7 @@ RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
 # Install additional tools and CLI utilities
 RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
     ccache \
-    lsb-release wget software-properties-common gnupg libsystemd-dev \
+    lsb-release software-properties-common gnupg libsystemd-dev \
     jq \
     tree \
     htop \
@@ -67,6 +67,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt update && apt install -y gh
 
 # Install yq (YAML processor) with version pinning and checksum verification
+# Note: Checksum is specific to linux/amd64. For multi-arch support, implement dynamic checksum selection.
 ARG YQ_VERSION=v4.44.3
 ARG YQ_BINARY=yq_linux_amd64
 ARG YQ_CHECKSUM=cdec61ee0ce1cbdaa11088fd02da7da64afe2bc096410910f7382edb9f2cd4ed8541a30e885e555c7cea58fd925b5d5558e8ef70594832d3433f4ebbfb120d4f

@@ -49,7 +49,7 @@ jobs:
           echo "major_minor=$VERSION" >> $GITHUB_OUTPUT
           
           # Find highest z for this x.y version, filtering only numeric patch versions
-          HIGHEST_Z=$(git tag -l "v${VERSION}.*" | awk -F. '{print $NF}' | { grep -E '^[0-9]+$' || true; } | sort -V | tail -1)
+          HIGHEST_Z=$(git tag -l "docker_v${VERSION}.*" | awk -F. '{print $NF}' | { grep -E '^[0-9]+$' || true; } | sort -V | tail -1)
           
           # If no tags exist, start from 0, otherwise increment
           if [ -z "$HIGHEST_Z" ]; then
