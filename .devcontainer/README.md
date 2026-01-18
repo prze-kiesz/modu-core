@@ -92,19 +92,18 @@ Version format: `x.y.z` where:
 
 When changes are merged to `main`:
 - `latest` - Always points to the newest build
-- `x.y.z` - Full semantic version (e.g., `1.0.3`)
-- `x.y` - Minor version, tracks latest patch (e.g., `1.0` → `1.0.3`)
+- `docker_vx.y.z` - Semantic version with prefix (e.g., `docker_v1.0.3`)
 - `main` - Main branch identifier
 - `sha-abc123` - Specific commit hash
 - **Git tag created:** `docker_vx.y.z` (e.g., `docker_v1.0.3`)
 
-The `docker_v` prefix distinguishes Docker image versions from system releases.
+The `docker_v` prefix distinguishes container image versions from future system releases.
 
 **Example progression:**
 ```
-VERSION=1.0, first build  → 1.0.0, 1.0, latest, main, sha-xxx (git tag: docker_v1.0.0)
-VERSION=1.0, second build → 1.0.1, 1.0, latest, main, sha-yyy (git tag: docker_v1.0.1)
-VERSION=1.1, first build  → 1.1.0, 1.1, latest, main, sha-zzz (git tag: docker_v1.1.0)
+VERSION=1.0, first build  → docker_v1.0.0, latest, main, sha-xxx (git tag: docker_v1.0.0)
+VERSION=1.0, second build → docker_v1.0.1, latest, main, sha-yyy (git tag: docker_v1.0.1)
+VERSION=1.1, first build  → docker_v1.1.0, latest, main, sha-zzz (git tag: docker_v1.1.0)
 ```
 
 ### Branch Tags
@@ -136,13 +135,13 @@ platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/riscv64
 docker pull ghcr.io/prze-kiesz/modu-core:latest
 
 # Explicitly specify platform
-docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:1.0.0
+docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:docker_v1.0.0
 
 # View available architectures
 docker manifest inspect ghcr.io/prze-kiesz/modu-core:latest
 ```
 
-**Note:** Docker image tags (e.g., `1.0.0`) refer to the semantic version without prefix. Git tags use `docker_v` prefix (e.g., `docker_v1.0.0`).
+**Note:** Both Docker image tags and git tags use the `docker_v` prefix for version identification (e.g., `docker_v1.0.0`).
 
 ## Image Metadata
 

@@ -81,9 +81,8 @@ jobs:
           tags: |
             # Tag as 'latest' on main branch
             type=raw,value=latest,enable={{is_default_branch}}
-            # Tag with semantic version x.y.z on main branch
-            type=raw,value=${{ steps.version.outputs.full }},enable={{is_default_branch}}
-            type=raw,value=${{ steps.version.outputs.major_minor }},enable={{is_default_branch}}
+            # Tag with docker_v prefix (matching git tags)
+            type=raw,value=docker_v${{ steps.version.outputs.full }},enable={{is_default_branch}}
             # Tag with semantic version on release
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
