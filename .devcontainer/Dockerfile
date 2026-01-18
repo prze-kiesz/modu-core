@@ -66,9 +66,13 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
     apt update && apt install -y gh
 
-# Install yq (YAML processor)
-RUN wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
-    chmod +x /usr/local/bin/yq
+# Install yq (YAML processor) with version pinning and checksum verification
+ARG YQ_VERSION=v4.44.3
+RUN wget -q https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -O /usr/local/bin/yq && \
+    wget -q https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/checksums_sha256.txt -O /tmp/yq_checksums_sha256.txt && \
+    (cd /usr/local/bin && sha256sum yq | grep "$(grep 'yq_linux_amd64' /tmp/yq_checksums_sha256.txt | cut -d ' ' -f1)") && \
+    chmod +x /usr/local/bin/yq && \
+    rm /tmp/yq_checksums_sha256.txt
 
 # Set locales
 RUN apt update && apt install -y locales && \
