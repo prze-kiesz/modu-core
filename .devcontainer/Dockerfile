@@ -47,10 +47,50 @@ RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
     crossbuild-essential-arm64 \
     openssh-client 
 
-# Install additional tools
+# Install additional tools, CLI utilities, and networking tools
 RUN apt update && apt upgrade -y && apt install -y --no-install-recommends \
     ccache \
-    lsb-release wget software-properties-common gnupg libsystemd-dev
+    lsb-release software-properties-common gnupg libsystemd-dev \
+    jq \
+    tree \
+    htop \
+    file \
+    less \
+    iputils-ping \
+    netcat-openbsd \
+    dnsutils
+
+# Install GitHub CLI (gh)
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+    apt update && apt install -y gh
+
+# Install yq (YAML processor) with version pinning and checksum verification
+# Supports multiple architectures with conditional checksum verification
+ARG YQ_VERSION=v4.44.3
+RUN set -e; \
+    arch="$(dpkg --print-architecture)"; \
+    case "${arch}" in \
+      amd64) \
+        yq_binary="yq_linux_amd64"; \
+        yq_checksum="cdec61ee0ce1cbdaa11088fd02da7da64afe2bc096410910f7382edb9f2cd4ed8541a30e885e555c7cea58fd925b5d5558e8ef70594832d3433f4ebbfb120d4f"; \
+        ;; \
+      arm64) \
+        yq_binary="yq_linux_arm64"; \
+        yq_checksum="b392ca3d3f836fc045eaac1f8968a9f5f3208cb5a778b656d0b30330d5c9a2a43f609352c7b9b27bce1eeea9dc2c18416b0d3349de7faaf1d45df6936b8c9bbd"; \
+        ;; \
+      *) \
+        yq_binary="yq_linux_${arch}"; \
+        yq_checksum=""; \
+        echo "Warning: no checksum configured for architecture '${arch}', skipping verification." >&2; \
+        ;; \
+    esac; \
+    wget -q "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${yq_binary}" -O /usr/local/bin/yq; \
+    if [ -n "${yq_checksum}" ]; then \
+      echo "${yq_checksum}  /usr/local/bin/yq" | sha512sum -c -; \
+    fi; \
+    chmod +x /usr/local/bin/yq
 
 # Set locales
 RUN apt update && apt install -y locales && \

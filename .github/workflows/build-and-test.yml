@@ -17,11 +17,81 @@ on:
       - '**.md'
       - '.devcontainer/**'
       - 'LICENSE'
+  # Run after Docker image is built (when triggered by Docker workflow completion)
+  workflow_run:
+    workflows: ["Build and Push Docker Image"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
+  # Wait for Docker build workflow to complete if it's running
+  wait-for-docker:
+    runs-on: ubuntu-latest
+    # Always run check, but only wait on main branch or when triggered by workflow_run
+    if: always()
+    steps:
+      - name: Wait for Docker build to complete
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Only check for running docker builds on main branch or workflow_run trigger
+            const shouldWait = context.eventName === 'workflow_run' || 
+                              (context.eventName === 'push' && context.ref === 'refs/heads/main') ||
+                              (context.eventName === 'pull_request' && context.payload.pull_request.base.ref === 'main');
+            
+            if (!shouldWait) {
+              console.log('Skipping wait - not targeting main branch');
+              return;
+            }
+            
+            const workflows = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-build.yml',
+              status: 'in_progress',
+              branch: 'main'
+            });
+            
+            if (workflows.data.workflow_runs.length > 0) {
+              console.log('Docker build workflow is running, waiting...');
+              const runId = workflows.data.workflow_runs[0].id;
+              
+              // Poll until completion (max 30 minutes)
+              let completed = false;
+              let iterations = 0;
+              const maxIterations = 60; // 30 minutes (60 * 30s)
+              while (!completed && iterations < maxIterations) {
+                await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30s
+                iterations++;
+                const run = await github.rest.actions.getWorkflowRun({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  run_id: runId
+                });
+                
+                if (run.data.status === 'completed') {
+                  completed = true;
+                  console.log('Docker build completed with conclusion:', run.data.conclusion);
+                  if (run.data.conclusion !== 'success') {
+                    core.setFailed('Docker build did not succeed');
+                  }
+                }
+              }
+              
+              if (!completed) {
+                core.setFailed('Timeout: Docker build did not complete within 30 minutes');
+              }
+            } else {
+              console.log('No Docker build workflow is currently running');
+            }
+
   build-and-test:
     runs-on: ubuntu-latest
+    needs: wait-for-docker
+    if: always() && (needs.wait-for-docker.result == 'success' || needs.wait-for-docker.result == 'skipped')
     container:
       image: ghcr.io/prze-kiesz/modu-core:latest
       credentials:
