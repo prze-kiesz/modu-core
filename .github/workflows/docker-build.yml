@@ -33,16 +33,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Required for git tag lookup to find all version tags
 
       - name: Read version from file
         id: version
         run: |
           VERSION=$(cat .devcontainer/VERSION)
+          
+          # Validate VERSION format (must be x.y)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            echo "Invalid version format in .devcontainer/VERSION: '$VERSION'. Expected format: x.y" >&2
+            exit 1
+          fi
+          
           echo "major_minor=$VERSION" >> $GITHUB_OUTPUT
           
-          # Find highest z for this x.y version
-          HIGHEST_Z=$(git tag -l "v${VERSION}.*" | sed "s/v${VERSION}.//" | sort -n | tail -1)
+          # Find highest z for this x.y version, filtering only numeric patch versions
+          HIGHEST_Z=$(git tag -l "v${VERSION}.*" | awk -F. '{print $NF}' | { grep -E '^[0-9]+$' || true; } | sort -V | tail -1)
           
           # If no tags exist, start from 0, otherwise increment
           if [ -z "$HIGHEST_Z" ]; then
@@ -113,5 +120,18 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ steps.version.outputs.full }}" -m "Docker image v${{ steps.version.outputs.full }}"
-          git push origin "v${{ steps.version.outputs.full }}"
+          
+          TAG="v${{ steps.version.outputs.full }}"
+          
+          # Fetch latest tags to check for concurrent builds
+          git fetch --tags origin
+          
+          # Check if tag already exists
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping tag creation and push."
+          else
+            git tag -a "$TAG" -m "Docker image $TAG"
+            if ! git push origin "$TAG" 2>&1; then
+              echo "Warning: Failed to push tag $TAG. It may have been created by a concurrent workflow run." >&2
+            fi
+          fi

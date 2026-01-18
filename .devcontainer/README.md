@@ -127,7 +127,7 @@ platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/riscv64
 docker pull ghcr.io/prze-kiesz/modu-core:latest
 
 # Explicitly specify platform
-docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:1.0.5
+docker pull --platform linux/arm64 ghcr.io/prze-kiesz/modu-core:1.0.0
 
 # View available architectures
 docker manifest inspect ghcr.io/prze-kiesz/modu-core:latest
