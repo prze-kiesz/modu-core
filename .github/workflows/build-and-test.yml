@@ -30,12 +30,23 @@ jobs:
   # Wait for Docker build workflow to complete if it's running
   wait-for-docker:
     runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_run'
+    # Always run check, but only wait on main branch or when triggered by workflow_run
+    if: always()
     steps:
       - name: Wait for Docker build to complete
         uses: actions/github-script@v7
         with:
           script: |
+            // Only check for running docker builds on main branch or workflow_run trigger
+            const shouldWait = context.eventName === 'workflow_run' || 
+                              (context.eventName === 'push' && context.ref === 'refs/heads/main') ||
+                              (context.eventName === 'pull_request' && context.payload.pull_request.base.ref === 'main');
+            
+            if (!shouldWait) {
+              console.log('Skipping wait - not targeting main branch');
+              return;
+            }
+            
             const workflows = await github.rest.actions.listWorkflowRunsForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
