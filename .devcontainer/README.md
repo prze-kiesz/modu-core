@@ -70,6 +70,7 @@ docker build -t modu-core-dev .
 - **yq** - YAML processor for configuration files
 - **tree** - Directory structure visualization
 - **htop** - Interactive process viewer
+- **file, less** - File inspection and paging utilities
 - **iputils-ping, netcat, dnsutils** - Networking tools
 
 ## Available Tags
