@@ -68,11 +68,11 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 
 # Install yq (YAML processor) with version pinning and checksum verification
 ARG YQ_VERSION=v4.44.3
-RUN wget -q https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64 -O /usr/local/bin/yq && \
-    wget -q https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/checksums_sha256.txt -O /tmp/yq_checksums_sha256.txt && \
-    (cd /usr/local/bin && sha256sum yq | grep "$(grep 'yq_linux_amd64' /tmp/yq_checksums_sha256.txt | cut -d ' ' -f1)") && \
-    chmod +x /usr/local/bin/yq && \
-    rm /tmp/yq_checksums_sha256.txt
+ARG YQ_BINARY=yq_linux_amd64
+ARG YQ_CHECKSUM=45f0a870a9d4bc584217e1562439cd5c8bc516dee2a5b5dfcc38c4c21a40e45542dd929ac655180d9a30afa85edcdcc3cd577f86fbf7c320a97794aaef860004
+RUN wget -q https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/${YQ_BINARY} -O /usr/local/bin/yq && \
+    echo "${YQ_CHECKSUM}  /usr/local/bin/yq" | sha512sum -c - && \
+    chmod +x /usr/local/bin/yq
 
 # Set locales
 RUN apt update && apt install -y locales && \
