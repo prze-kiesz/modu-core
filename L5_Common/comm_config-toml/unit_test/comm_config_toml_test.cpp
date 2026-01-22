@@ -32,7 +32,7 @@ TEST_F(ConfigTest, InstanceReturnsSingleton) {
 
 TEST_F(ConfigTest, InitializeReturnsSuccess) {
   Config& config = Config::Instance();
-  std::error_code ec = config.Initialize();
+  std::error_code ec = config.Initialize("test-app");
   
   EXPECT_FALSE(ec);
   EXPECT_TRUE(config.IsInitialized());
@@ -40,7 +40,7 @@ TEST_F(ConfigTest, InitializeReturnsSuccess) {
 
 TEST_F(ConfigTest, LoadAcceptsPath) {
   Config& config = Config::Instance();
-  config.Initialize();
+  config.Initialize("test-app");
   
   std::error_code ec = config.Load("/tmp/test_config.toml");
   

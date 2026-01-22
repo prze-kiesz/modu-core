@@ -1,0 +1,22 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.preferredGenerators": ["Unix Makefiles"],
+    "cmake.defaultVariants": {
+        "buildType": {
+            "default": "debug",
+            "choices": {
+                "debug": {
+                    "short": "Debug",
+                    "long": "Emit debug information",
+                    "buildType": "Debug"
+                },
+                "release": {
+                    "short": "Release",
+                    "long": "Enable optimizations",
+                    "buildType": "Release"
+                }
+            }
+        }
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}

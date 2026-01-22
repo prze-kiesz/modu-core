@@ -75,10 +75,15 @@ class Config {
   Config& operator=(Config&&) = delete;
 
   /**
-   * @brief Initialize configuration system
+   * @brief Initialize configuration system with XDG Base Directory hierarchy
+   * @param app_name Application name for config directory (e.g., "modu-core")
    * @return Error code indicating success or failure
+   * @details Loads configuration in order:
+   *          1. /etc/<app_name>/config.toml (system defaults)
+   *          2. ~/.config/<app_name>/config.toml (user overrides)
+   *          Later files override earlier ones
    */
-  std::error_code Initialize();
+  std::error_code Initialize(const std::string& app_name);
 
   /**
    * @brief Load configuration from TOML file
@@ -92,6 +97,14 @@ class Config {
    * @return Error code indicating success or failure
    */
   std::error_code Reload();
+
+  /**
+   * @brief Override specific configuration value (highest priority)
+   * @param path Dot-separated path (e.g., "infr_main.port")
+   * @param value String value to set (converted to appropriate type)
+   * @details Supports type inference: "123" -> int, "true" -> bool, "text" -> string
+   */
+  void SetOverride(const std::string& path, const std::string& value);
 
   /**
    * @brief Check if configuration is initialized
@@ -132,8 +145,29 @@ class Config {
   Config();
   ~Config() = default;
 
+  /**
+   * @brief Get XDG config home directory
+   * @return Path to config home ($XDG_CONFIG_HOME or ~/.config)
+   */
+  std::string GetXdgConfigHome() const;
+
+  /**
+   * @brief Merge source TOML into destination (recursive)
+   * @param dest Destination TOML value to merge into
+   * @param src Source TOML value to merge from
+   */
+  void MergeToml(toml::value& dest, const toml::value& src);
+
+  /**
+   * @brief Infer TOML value type from string and convert
+   * @param value_str String value to convert
+   * @return TOML value with inferred type
+   */
+  toml::value InferValueType(const std::string& value_str) const;
+
   bool m_initialized{false};
-  std::string m_config_path;
+  std::string m_app_name;
+  std::vector<std::string> m_config_paths;  // For reload
   toml::value m_data;
 };
 

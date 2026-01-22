@@ -25,8 +25,8 @@ void to_toml(toml::value& dest, const InfrMainConfig& value) {
 }
 
 void from_toml(const toml::value& src, InfrMainConfig& value) {
-  // Use default-constructed struct as source of default values
-  InfrMainConfig defaults;
+  // Use default-constructed struct as source of default values (created once)
+  static const InfrMainConfig defaults;
   
   try {
     // Parse each field with default values from struct definition

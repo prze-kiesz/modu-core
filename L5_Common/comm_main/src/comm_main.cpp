@@ -13,6 +13,10 @@
 #include "comm_config_toml.h"
 #include "comm_terminate.h"
 
+#ifndef PROJECT_NAME
+#define PROJECT_NAME "modu-core"  // Fallback if not building from main/
+#endif
+
 namespace comm {
 
 // Error category implementation
@@ -37,28 +41,62 @@ const std::error_category& getInitErrorCategory() noexcept {
 // Default constructor - no initialization required (modules initialized in init())
 Main::Main() = default;
 
+std::vector<std::pair<std::string, std::string>> Main::ParseCommandLineOverrides(
+    int argc, const char* argv[]) {
+  std::vector<std::pair<std::string, std::string>> overrides;
+  
+  for (int i = 1; i < argc; i++) {
+    std::string arg = argv[i];
+    
+    // Look for --set key=value pattern
+    if (arg == "--set" && i + 1 < argc) {
+      std::string keyval = argv[++i];
+      size_t eq_pos = keyval.find('=');
+      
+      if (eq_pos != std::string::npos && eq_pos > 0 && eq_pos < keyval.length() - 1) {
+        std::string key = keyval.substr(0, eq_pos);
+        std::string value = keyval.substr(eq_pos + 1);
+        overrides.push_back({key, value});
+        LOG(INFO) << "Parsed CLI override: " << key << " = " << value;
+      } else {
+        LOG(WARNING) << "Invalid --set format (expected key=value): " << keyval;
+      }
+    }
+  }
+  
+  return overrides;
+}
+
 std::error_code Main::init(int argc, const char* argv[]) {  // NOLINT
-  // Initialize configuration system as first module
-  auto config_init = Config::Instance().Initialize();
+  // Use project name from CMake, fallback to extracting from argv[0]
+  std::string app_name = PROJECT_NAME;
+  
+  // Optionally override from argv[0] if provided (for custom builds)
+  if (argc > 0 && argv[0]) {
+    std::string full_path = argv[0];
+    // Extract basename (last part after /)
+    size_t last_slash = full_path.find_last_of('/');
+    if (last_slash != std::string::npos) {
+      std::string basename = full_path.substr(last_slash + 1);
+      if (!basename.empty() && basename != PROJECT_NAME) {
+        LOG(INFO) << "Using executable name '" << basename 
+                  << "' instead of project name '" << PROJECT_NAME << "'";
+        app_name = basename;
+      }
+    }
+  }
+  
+  // Initialize configuration system with XDG hierarchy
+  auto config_init = Config::Instance().Initialize(app_name);
   if (config_init) {
     LOG(ERROR) << "Failed to initialize Config module: " << config_init.message();
     return config_init;
   }
 
-  // Load configuration file (default or from command line)
-  // TODO: Parse argc/argv for --config or -c flag
-  std::string config_path = "/etc/modu-core/config.toml";  // Default path
-  if (argc > 1) {
-    // Simple argument parsing - first argument is config path
-    config_path = argv[1];
-  }
-  
-  auto config_load = Config::Instance().Load(config_path);
-  if (config_load) {
-    LOG(WARNING) << "Failed to load config from " << config_path << ": " << config_load.message();
-    LOG(WARNING) << "Continuing with default configuration";
-  } else {
-    LOG(INFO) << "Configuration loaded from: " << config_path;
+  // Parse and apply CLI overrides (highest priority)
+  auto cli_overrides = ParseCommandLineOverrides(argc, argv);
+  for (const auto& [key, value] : cli_overrides) {
+    Config::Instance().SetOverride(key, value);
   }
 
   // Initialize graceful shutdown handler (SIGINT, SIGTERM, SIGQUIT, SIGHUP)
