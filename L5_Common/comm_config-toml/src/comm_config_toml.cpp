@@ -47,6 +47,8 @@ Config& Config::Instance() {
 
 Config::Config() {
   LOG(INFO) << "Config instance created";
+  // Ensure default data is a table to avoid null state before initialization
+  m_data = toml::table{};
 }
 
 std::string Config::GetXdgConfigHome() const {
