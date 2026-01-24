@@ -116,13 +116,6 @@ RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml1
     rm -rf /tmp/toml11
 
 
-# Build and install toml11 (header-only TOML v1.0.0 library) from source
-RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml11 && \
-    cd /tmp/toml11 && \
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DTOML11_INSTALL=ON && \
-    cmake --install build && \
-    rm -rf /tmp/toml11
-
 # Build and install gRPC and grpc_cli from source
 #RUN git clone --recurse-submodules -b v1.60.1 https://github.com/grpc/grpc /tmp/grpc && \
 #    cd /tmp/grpc && \

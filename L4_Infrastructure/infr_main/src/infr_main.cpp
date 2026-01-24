@@ -51,17 +51,13 @@ std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
       return makeErrorCode(InitError::MODULE_INIT_FAILED);
     }
     
-    // Read infr_main configuration from "infrastructure" section
-    auto infr_config = config.Get<infr::InfrMainConfig>("infrastructure");
-    
-    // Use configuration values
+    // Read infr_main configuration from "infr_main" section
+    auto infr_config = config.Get<infr::InfrMainConfig>("infr_main");
     LOG(INFO) << "Device name: " << infr_config.device_name;
     LOG(INFO) << "Port: " << infr_config.port;
     LOG(INFO) << "Logging enabled: " << infr_config.enable_logging;
     LOG(INFO) << "Timeout: " << infr_config.timeout_seconds << "s";
     
-    LOG(INFO) << "Infrastructure layer (L4) initialization completed successfully";
-    return {};
   } catch (const std::exception& e) {
     LOG(ERROR) << "Config load failed: " << e.what();
       return makeErrorCode(InitError::MODULE_INIT_FAILED);
