@@ -46,9 +46,9 @@ Config& Config::Instance() {
 }
 
 Config::Config() {
-  LOG(INFO) << "Config instance created";
   // Ensure default data is a table to avoid null state before initialization
   m_data = toml::table{};
+  // Note: Avoid LOG calls in static initialization - glog may not be initialized yet
 }
 
 std::string Config::GetXdgConfigHome() const {
@@ -101,7 +101,10 @@ std::error_code Config::Initialize(const std::string& app_name) {
   
   m_app_name = app_name;
   m_config_paths.clear();
-  m_data = toml::value{};  // Empty table
+  // Keep m_data as empty table (initialized in constructor), don't reset it
+  if (!m_data.is_table()) {
+    m_data = toml::table{};
+  }
   
   // Build paths in XDG hierarchy
   std::vector<std::string> candidate_paths = {
@@ -203,32 +206,36 @@ const toml::value& Config::GetData() const {
 toml::value Config::InferValueType(const std::string& value_str) const {
   // Try to infer type from string
   
-  // Boolean
-  if (value_str == "true" || value_str == "TRUE") {
+  // Boolean - case insensitive
+  if (value_str == "true" || value_str == "TRUE" || value_str == "True") {
     return toml::value(true);
   }
-  if (value_str == "false" || value_str == "FALSE") {
+  if (value_str == "false" || value_str == "FALSE" || value_str == "False") {
     return toml::value(false);
   }
   
-  // Integer
+  // Integer - with validation
   try {
     size_t pos;
     int64_t int_val = std::stoll(value_str, &pos);
     if (pos == value_str.length()) {
       return toml::value(int_val);
     }
+  } catch (const std::out_of_range&) {
+    LOG(WARNING) << "Integer value out of range: " << value_str;
   } catch (...) {
     // Not an integer, continue
   }
   
-  // Float
+  // Float - with validation
   try {
     size_t pos;
     double float_val = std::stod(value_str, &pos);
     if (pos == value_str.length()) {
       return toml::value(float_val);
     }
+  } catch (const std::out_of_range&) {
+    LOG(WARNING) << "Float value out of range: " << value_str;
   } catch (...) {
     // Not a float, continue
   }
@@ -246,11 +253,22 @@ void Config::SetOverride(const std::string& path, const std::string& value) {
   size_t end = path.find('.');
   
   while (end != std::string::npos) {
-    keys.push_back(path.substr(start, end - start));
+    std::string key = path.substr(start, end - start);
+    if (key.empty()) {
+      LOG(ERROR) << "Invalid override path (empty key): " << path;
+      return;
+    }
+    keys.push_back(std::move(key));
     start = end + 1;
     end = path.find('.', start);
   }
-  keys.push_back(path.substr(start));
+  
+  std::string last_key = path.substr(start);
+  if (last_key.empty()) {
+    LOG(ERROR) << "Invalid override path (empty final key): " << path;
+    return;
+  }
+  keys.push_back(std::move(last_key));
   
   if (keys.empty()) {
     LOG(ERROR) << "Invalid override path: " << path;
