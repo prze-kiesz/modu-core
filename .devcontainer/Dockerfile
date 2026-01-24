@@ -108,7 +108,6 @@ RUN wget https://apt.llvm.org/llvm.sh && \
     update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-19 100 && \
     update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-19 100
 
-
 # Build and install toml11 (header-only TOML v1.0.0 library) from source
 RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml11 && \
     cd /tmp/toml11 && \
@@ -116,17 +115,18 @@ RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml1
     cmake --install build && \
     rm -rf /tmp/toml11
 
+
 # Build and install gRPC and grpc_cli from source
 #RUN git clone --recurse-submodules -b v1.60.1 https://github.com/grpc/grpc /tmp/grpc && \
 #    cd /tmp/grpc && \
 #    mkdir -p cmake/build && cd cmake/build && \
-#    cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -DBUILD_SHARED_LIBS=ON && \
+#    cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=20 -DBUILD_SHARED_LIBS=ON && \
 #    make -j"$(nproc)" && \
 #    make install && ldconfig
 
 # Build grpc_cli as statically linked binary
 #RUN cd /tmp/grpc/cmake/build && rm -rf * &&\
-#    cmake -DCMAKE_BUILD_TYPE=Release -DgRPC_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=17 ../.. && \
+#    cmake -DCMAKE_BUILD_TYPE=Release -DgRPC_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=20 ../.. && \
 #    make -j"$(nproc)" grpc_cli && \
 #    cp grpc_cli /usr/local/bin && \
 #    cd / && rm -rf /tmp/grpc
@@ -137,7 +137,7 @@ RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml1
 #    tar -xzf boost.tar.gz && \
 #    cd boost_1_88_0 && \
 #    ./bootstrap.sh && \
-#    ./b2 install -j"$(nproc)" cxxflags="-std=c++17" variant=release link=shared threading=multi && \
+#    ./b2 install -j"$(nproc)" cxxflags="-std=c++20" variant=release link=shared threading=multi && \
 #    ldconfig && \
 #    cd / && rm -rf /tmp/boost
 

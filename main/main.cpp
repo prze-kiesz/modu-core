@@ -5,17 +5,18 @@
 #include "comm_main.h"
 #include "comm_terminate.h"
 #include "infr_main.h"
+#include "config.h"  // CMake-generated project configuration
 
 int main(const int argc, const char *argv[]) {
 
   FLAGS_logtostderr = true;
   FLAGS_minloglevel = 0;
 
-  // Initialize Google’s logging library.
+  // Initialize Google's logging library.
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
   
-  LOG(INFO) << "Starting application";
+  LOG(INFO) << "Starting " << PROJECT_NAME << " v" << PROJECT_VERSION;
 
   // Initialize all layers starting from the lowest one.
   

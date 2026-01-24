@@ -42,6 +42,7 @@ target_include_directories(${MODULE_TARGET}
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        $<TARGET_PROPERTY:${PROJECT_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 ###############
@@ -49,6 +50,7 @@ target_include_directories(${MODULE_TARGET}
 #
 target_link_libraries(${MODULE_TARGET}
     PRIVATE
+        ${PROJECT_NAME}-comm_config-toml
         ${PROJECT_NAME}-comm_terminate
         glog::glog
 )

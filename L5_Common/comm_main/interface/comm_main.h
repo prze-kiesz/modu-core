@@ -10,6 +10,9 @@
 
 #include <cstdint>
 #include <system_error>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace comm {
 
@@ -83,6 +86,16 @@ class Main {
   // Delete copy constructor and assignment operator (singleton pattern)
   Main(const Main&) = delete;
   Main& operator=(const Main&) = delete;
+
+ private:
+  /**
+   * @brief Parse command line overrides (--set key=value)
+   * @param argc Argument count
+   * @param argv Argument values
+   * @return Vector of key-value pairs for configuration overrides
+   */
+  static std::vector<std::pair<std::string, std::string>> ParseCommandLineOverrides(
+      int argc, const char* argv[]);
 };
 
 }  // namespace comm
