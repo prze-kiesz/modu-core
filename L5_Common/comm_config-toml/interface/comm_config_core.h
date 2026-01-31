@@ -112,6 +112,8 @@ class Config {
    * @brief Register a callback invoked after successful config reload
    * @param callback Function to call after Reload() finishes successfully
    * @note Callback is invoked from the thread that calls Reload()
+   * @note Multiple listeners are invoked sequentially in registration order
+   * @note Thread-safe: can be called from any thread
    */
   void RegisterReloadListener(std::function<void()> callback);
 
@@ -137,6 +139,7 @@ class Config {
   T Get(const std::string& path) const {
     T result;
     try {
+      std::lock_guard<std::mutex> lock(m_data_mutex);
       if (m_data.is_table() && m_data.contains(path)) {
         const auto& section = toml::find(m_data, path);
         from_toml(section, result);  // ADL will find the appropriate from_toml
@@ -195,6 +198,7 @@ class Config {
   std::string m_app_name;
   std::vector<std::string> m_config_paths;  // For reload
   toml::value m_data;
+  mutable std::mutex m_data_mutex;  // Protects m_data access
   std::vector<std::function<void()>> m_reload_listeners;
   mutable std::mutex m_reload_listeners_mutex;
   std::vector<std::pair<std::string, std::string>> m_overrides;

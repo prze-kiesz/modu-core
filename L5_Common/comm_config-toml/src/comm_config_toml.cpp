@@ -101,9 +101,12 @@ std::error_code Config::Initialize(const std::string& app_name) {
   
   m_app_name = app_name;
   m_config_paths.clear();
-  // Keep m_data as empty table (initialized in constructor), don't reset it
-  if (!m_data.is_table()) {
-    m_data = toml::table{};
+  {
+    std::lock_guard<std::mutex> lock(m_data_mutex);
+    // Keep m_data as empty table (initialized in constructor), don't reset it
+    if (!m_data.is_table()) {
+      m_data = toml::table{};
+    }
   }
   
   // Build paths in XDG hierarchy
@@ -126,11 +129,14 @@ std::error_code Config::Initialize(const std::string& app_name) {
       toml::value config_data = toml::parse(path);
       LOG(INFO) << "Loaded config from: " << path;
       
-      if (m_data.is_table()) {
-        MergeToml(m_data, config_data);
-        LOG(INFO) << "Merged config from: " << path;
-      } else {
-        m_data = config_data;
+      {
+        std::lock_guard<std::mutex> lock(m_data_mutex);
+        if (m_data.is_table()) {
+          MergeToml(m_data, config_data);
+          LOG(INFO) << "Merged config from: " << path;
+        } else {
+          m_data = config_data;
+        }
       }
       
       m_config_paths.push_back(path);
@@ -157,7 +163,11 @@ std::error_code Config::Load(const std::string& config_path) {
   LOG(INFO) << "Config::Load() called with path: " << config_path;
   
   try {
-    m_data = toml::parse(config_path);
+    toml::value loaded_data = toml::parse(config_path);
+    {
+      std::lock_guard<std::mutex> lock(m_data_mutex);
+      m_data = std::move(loaded_data);
+    }
     m_config_paths = {config_path};
     m_initialized = true;
     LOG(INFO) << "Successfully loaded TOML configuration from: " << config_path;
@@ -208,6 +218,7 @@ bool Config::IsInitialized() const {
 }
 
 const toml::value& Config::GetData() const {
+  std::lock_guard<std::mutex> lock(m_data_mutex);
   return m_data;
 }
 

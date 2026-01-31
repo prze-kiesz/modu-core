@@ -64,7 +64,7 @@ T from_toml(const Config& config, const std::string& path) {
  * @details Adds a helper to register a config-reload listener that re-fetches
  *          the config section and passes it to the callback.
  * @example
- * COMM_CONFIG_DEFINE_STRUCT(ServerConfig, port, host, timeout)
+ * COMM_CONFIG_DEFINE_STRUCT(ServerConfig)
  *
  * // Register reload handler (typically in module init)
  * comm::toml_serializer<ServerConfig>::RegisterConfigReloadListener(
@@ -72,7 +72,7 @@ T from_toml(const Config& config, const std::string& path) {
  *       // Apply new config
  *     });
  */
-#define COMM_CONFIG_DEFINE_STRUCT(Type, ...)                                    \
+#define COMM_CONFIG_DEFINE_STRUCT(Type)                                         \
   namespace comm {                                                              \
   template <>                                                                   \
   struct toml_serializer<Type> {                                                \
