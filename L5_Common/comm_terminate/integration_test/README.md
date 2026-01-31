@@ -2,19 +2,29 @@
 
 ## Overview
 
-Integration tests for the comm_terminate module's SIGHUP configuration reload functionality.
+Integration tests for the comm_terminate module, covering:
+1. **SIGHUP Configuration Reload** - Reload config without restart
+2. **Double SIGINT (Ctrl-C)** - Graceful shutdown with force-exit option
 
 ## Quick Start
 
 Run all integration tests:
 
 ```bash
+# SIGHUP config reload test
 ./run_test.sh
+
+# Double Ctrl-C test
+./run_test_double_sigint.sh
 ```
 
-## What Gets Tested
+## Test Suites
 
-The integration test validates:
+### 1. SIGHUP Configuration Reload Test
+
+Tests the listener pattern for configuration reload without process restart.
+
+**What Gets Tested:**
 
 1. **SIGHUP Signal Handling**: Process receives and handles SIGHUP without terminating
 2. **Multiple Config Reloads**: Multiple SIGHUP signals can be sent and processed
@@ -23,7 +33,26 @@ The integration test validates:
 5. **Graceful Shutdown**: SIGTERM triggers proper cleanup and termination
 6. **systemd Integration**: READY/RELOADING status notifications work correctly
 
-## Test Workflow
+**See:** [Full SIGHUP test documentation](#sighup-test-details) below
+
+### 2. Double SIGINT (Ctrl-C) Test
+
+Tests that first Ctrl-C initiates graceful shutdown, second Ctrl-C forces immediate exit.
+
+**What Gets Tested:**
+1. **First SIGINT**: Initiates graceful shutdown, cleanup continues
+2. **Second SIGINT**: Forces immediate termination via `std::_Exit(130)`
+3. **Thread Behavior**: Signal handler continues waiting after first SIGINT
+4. **Exit Code**: Process exits with code 130 (128 + SIGINT)
+5. **Interrupted Cleanup**: Cleanup does NOT complete (interrupted by second SIGINT)
+
+**See:** [README_DOUBLE_SIGINT.md](README_DOUBLE_SIGINT.md) for full documentation
+
+---
+
+## SIGHUP Test Details
+
+### Test Workflow
 
 The `run_test.sh` script:
 
