@@ -89,7 +89,7 @@ set_tests_properties(${INTEGRATION_TEST_TARGET} PROPERTIES TIMEOUT 15)
 
 add_test(
     NAME ${INTEGRATION_TEST_DOUBLE_SIGINT_TARGET}
-    COMMAND bash -c "${CMAKE_CURRENT_BINARY_DIR}/${INTEGRATION_TEST_DOUBLE_SIGINT_TARGET} > /tmp/test_double_sigint.log 2>&1 & PID=\$!; sleep 2; kill -SIGINT \$PID; sleep 1; kill -SIGINT \$PID; wait \$PID"
+    COMMAND bash -c "${CMAKE_CURRENT_BINARY_DIR}/${INTEGRATION_TEST_DOUBLE_SIGINT_TARGET} > /tmp/test_double_sigint.log 2>&1 & PID=\$!; sleep 2; kill -SIGINT \$PID; sleep 1; kill -SIGINT \$PID; wait \$PID; EXIT=\$?; if [ \$EXIT -eq 130 ]; then exit 0; else echo \"Expected exit code 130 but got \$EXIT\"; exit 1; fi"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 set_tests_properties(${INTEGRATION_TEST_DOUBLE_SIGINT_TARGET} PROPERTIES TIMEOUT 10)
