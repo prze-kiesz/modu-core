@@ -204,9 +204,15 @@ Terminate::~Terminate() {
 
   // Stop signal handler thread
   if (m_signal_wait && m_signal_wait->joinable()) {
-    // Signal worker thread to exit and wait for clean shutdown
-    m_terminate.release();
-    m_signal_wait->join();
+    // If first SIGINT was received, signal handler is still waiting for second SIGINT
+    // Detach it instead of joining (thread will be terminated when process exits)
+    if (m_first_sigint_received.load()) {
+      m_signal_wait->detach();
+    } else {
+      // Normal termination (SIGTERM/SIGQUIT) - signal handler has exited, safe to join
+      m_terminate.release();
+      m_signal_wait->join();
+    }
   }
   // Note: As a singleton, this destructor is only called at program exit
 }
