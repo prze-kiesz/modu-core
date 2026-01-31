@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <csignal>
 #include <functional>
@@ -91,6 +92,9 @@ class Terminate {
   
   /// Mutex protecting config reload listeners vector
   std::mutex m_listeners_mutex;
+  
+  /// Flag to track if first SIGINT was received (for double Ctrl-C handling)
+  std::atomic<bool> m_first_sigint_received{false};
 
   /**
    * @brief Initializes signal set and semaphore for graceful shutdown handling

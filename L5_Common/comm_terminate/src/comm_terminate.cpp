@@ -125,15 +125,48 @@ void Terminate::WaitForTerminateSignal() {
       }
       
       // Handle termination signals (SIGINT, SIGTERM, SIGQUIT)
-      should_terminate = true;
       
-      // Notify systemd that graceful shutdown has begun
-      sd_notify(0, "STOPPING=1");
-
-      // Store termination reason for later retrieval by WaitForTermination()
-      // Thread safety: synchronized via m_terminate.release() happens-before m_terminate.acquire()
-      m_terminate_reason = GetSignalName(signal);
-      LOG(INFO) << "Application daemon shutting down. Received signal " << signal << " (" << m_terminate_reason << ")";
+      // For SIGINT: check if this is the second one (force exit)
+      if (signal == SIGINT) {
+        bool expected = false;
+        if (m_first_sigint_received.compare_exchange_strong(expected, true)) {
+          // First SIGINT - initiate graceful shutdown but keep listening for second one
+          LOG(INFO) << "First SIGINT received - starting graceful shutdown";
+          LOG(INFO) << "Press Ctrl-C again to force immediate termination";
+          
+          // Notify systemd that graceful shutdown has begun
+          sd_notify(0, "STOPPING=1");
+          
+          // Store termination reason for WaitForTermination()
+          m_terminate_reason = GetSignalName(signal);
+          LOG(INFO) << "Application daemon shutting down. Received signal " << signal << " (" << m_terminate_reason << ")";
+          
+          // Signal main thread to begin graceful shutdown
+          m_terminate.release();
+          
+          // IMPORTANT: Continue waiting for second SIGINT - don't set should_terminate!
+          continue;
+        } else {
+          // Second SIGINT - force immediate exit
+          LOG(WARNING) << "Second SIGINT received - forcing immediate termination!";
+          sd_notify(0, "STOPPING=1\nSTATUS=Forced termination by user");
+          std::_Exit(130);  // Exit immediately with code 130 (128 + SIGINT)
+        }
+      } else {
+        // Other termination signals - graceful shutdown and exit signal handler
+        should_terminate = true;
+        
+        // Notify systemd that graceful shutdown has begun
+        sd_notify(0, "STOPPING=1");
+        
+        // Store termination reason for WaitForTermination()
+        m_terminate_reason = GetSignalName(signal);
+        LOG(INFO) << "Application daemon shutting down. Received signal " << signal << " (" << m_terminate_reason << ")";
+      }
+      
+      if (!should_terminate) {
+        continue;  // SIGHUP or first SIGINT was handled, wait for more signals
+      }
     }
 
   } catch (const std::exception& l_exception) {
@@ -233,8 +266,10 @@ std::string Terminate::WaitForTermination() {
     std::this_thread::sleep_for(std::chrono::milliseconds(m_wait_ms));
   }
   
-  // Ensure worker thread has fully exited
-  m_signal_wait->join();
+  // Note: We don't join m_signal_wait thread here because it continues running
+  // to handle potential second SIGINT for force termination. The thread will be
+  // terminated automatically when the process exits.
+  
   return m_terminate_reason;
 }
 
