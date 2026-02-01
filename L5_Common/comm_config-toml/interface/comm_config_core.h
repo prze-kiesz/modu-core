@@ -191,6 +191,13 @@ class Config {
   void ApplyOverrideToData(const std::string& path, const std::string& value);
 
   /**
+   * @brief Apply override without acquiring m_data_mutex (caller must hold lock)
+   * @param path Dot-separated path (e.g., "infr_main.port")
+   * @param value String value to set (converted to appropriate type)
+   */
+  void ApplyOverrideToDataNoLock(const std::string& path, const std::string& value);
+
+  /**
    * @brief Notify registered listeners after successful reload
    */
   void NotifyReloadListeners();

@@ -266,12 +266,14 @@ toml::value Config::InferValueType(const std::string& value_str) const {
 void Config::SetOverride(const std::string& path, const std::string& value) {
   LOG(INFO) << "Setting override: " << path << " = " << value;
 
-  {
-    std::lock_guard<std::mutex> lock(m_overrides_mutex);
-    m_overrides[path] = value;  // O(1) insert or update
-  }
-
-  ApplyOverrideToData(path, value);
+  // Acquire both locks to prevent race between storing and applying override
+  std::lock_guard<std::mutex> overrides_lock(m_overrides_mutex);
+  std::lock_guard<std::mutex> data_lock(m_data_mutex);
+  
+  m_overrides[path] = value;  // O(1) insert or update
+  
+  // Apply directly to m_data (locks already held)
+  ApplyOverrideToDataNoLock(path, value);
 }
 
 void Config::ApplyOverrides() {
@@ -293,7 +295,11 @@ void Config::ApplyOverrides() {
 
 void Config::ApplyOverrideToData(const std::string& path, const std::string& value) {
   std::lock_guard<std::mutex> lock(m_data_mutex);
-  
+  ApplyOverrideToDataNoLock(path, value);
+}
+
+void Config::ApplyOverrideToDataNoLock(const std::string& path, const std::string& value) {
+  // Assumes m_data_mutex is already held by caller
   LOG(INFO) << "Applying override: " << path << " = " << value;
 
   // Parse path: "infr_main.port" -> ["infr_main", "port"]
