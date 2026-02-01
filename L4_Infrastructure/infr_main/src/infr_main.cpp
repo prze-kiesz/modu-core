@@ -10,7 +10,7 @@
 #include "infr_main.h"
 #include "infr_config.h"
 
-#include <comm_config_toml.h>
+#include <comm_config_client.h>
 #include <glog/logging.h>
 
 namespace infr {
@@ -42,24 +42,18 @@ std::error_code Main::init(int  /*argc*/, const char*  /*argv*/[]) {  // NOLINT
   // TODO: Add infrastructure layer modules initialization when implemented
   
   try {
-    // Get configuration singleton (already loaded by comm_main or earlier)
-    auto& config = comm::Config::Instance();
+    // Initialize InfrConfig singleton (loads config and registers reload listener)
+    infr::InfrConfig::Instance().Initialize();
     
-    // Check if configuration is initialized
-    if (!config.IsInitialized()) {
-      LOG(ERROR) << "Configuration not initialized";
-      return makeErrorCode(InitError::MODULE_INIT_FAILED);
-    }
-    
-    // Read infr_main configuration from "infr_main" section
-    auto infr_config = config.Get<infr::InfrMainConfig>("infr_main");
+    // Get current configuration
+    auto infr_config = infr::InfrConfig::Instance().Get();
     LOG(INFO) << "Device name: " << infr_config.device_name;
     LOG(INFO) << "Port: " << infr_config.port;
     LOG(INFO) << "Logging enabled: " << infr_config.enable_logging;
     LOG(INFO) << "Timeout: " << infr_config.timeout_seconds << "s";
     
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Config load failed: " << e.what();
+    LOG(ERROR) << "Config initialization failed: " << e.what();
       return makeErrorCode(InitError::MODULE_INIT_FAILED);
   }
 

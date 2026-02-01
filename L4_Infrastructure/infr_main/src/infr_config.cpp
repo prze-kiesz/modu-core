@@ -3,10 +3,11 @@
 
 /**
  * @file infr_config.cpp
- * @brief Implementation of InfrMainConfig serialization
+ * @brief Implementation of InfrMainConfig serialization and InfrConfig singleton
  */
 
 #include "infr_config.h"
+#include <comm_config_client.h>
 #include <glog/logging.h>
 
 namespace infr {
@@ -44,6 +45,83 @@ void from_toml(const toml::value& src, InfrMainConfig& value) {
     LOG(ERROR) << "Error parsing InfrMainConfig: " << e.what();
     LOG(WARNING) << "Using default values";
     value = defaults;
+  }
+}
+
+// InfrConfig implementation
+
+InfrConfig& InfrConfig::Instance() {
+  static InfrConfig instance;
+  return instance;
+}
+
+void InfrConfig::Initialize() {
+  if (m_initialized) {
+    LOG(WARNING) << "InfrConfig already initialized";
+    return;
+  }
+
+  LOG(INFO) << "Initializing InfrConfig";
+
+  // Load initial configuration
+  Reload();
+
+  // Register reload listener with comm::Config
+  comm::Config::Instance().RegisterReloadListener([this]() {
+    OnConfigReload();
+  });
+
+  m_initialized = true;
+  LOG(INFO) << "InfrConfig initialized successfully";
+}
+
+InfrMainConfig InfrConfig::Get() const {
+  std::lock_guard<std::mutex> lock(m_config_mutex);
+  return m_config;
+}
+
+void InfrConfig::RegisterReloadListener(std::function<void()> listener) {
+  std::lock_guard<std::mutex> lock(m_listeners_mutex);
+  m_listeners.push_back(std::move(listener));
+  LOG(INFO) << "Registered InfrConfig reload listener (total: " << m_listeners.size() << ")";
+}
+
+void InfrConfig::OnConfigReload() {
+  LOG(INFO) << "InfrConfig received reload notification from comm::Config";
+  Reload();
+  NotifyListeners();
+}
+
+void InfrConfig::Reload() {
+  try {
+    auto& config = comm::Config::Instance();
+    auto new_config = config.Get<InfrMainConfig>("infr_main");
+
+    {
+      std::lock_guard<std::mutex> lock(m_config_mutex);
+      m_config = new_config;
+    }
+
+    LOG(INFO) << "InfrConfig reloaded successfully";
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Failed to reload InfrConfig: " << e.what();
+  }
+}
+
+void InfrConfig::NotifyListeners() {
+  std::vector<std::function<void()>> listeners_copy;
+  {
+    std::lock_guard<std::mutex> lock(m_listeners_mutex);
+    listeners_copy = m_listeners;
+  }
+
+  LOG(INFO) << "Notifying " << listeners_copy.size() << " InfrConfig listener(s)";
+  for (const auto& listener : listeners_copy) {
+    try {
+      listener();
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "InfrConfig listener threw exception: " << e.what();
+    }
   }
 }
 

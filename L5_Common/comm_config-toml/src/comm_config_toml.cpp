@@ -6,7 +6,7 @@
  * @brief TOML-based configuration management implementation
  */
 
-#include "comm_config_toml.h"
+#include "comm_config_core.h"
 
 #include <glog/logging.h>
 #include <cstdlib>
@@ -101,9 +101,12 @@ std::error_code Config::Initialize(const std::string& app_name) {
   
   m_app_name = app_name;
   m_config_paths.clear();
-  // Keep m_data as empty table (initialized in constructor), don't reset it
-  if (!m_data.is_table()) {
-    m_data = toml::table{};
+  {
+    std::lock_guard<std::mutex> lock(m_data_mutex);
+    // Keep m_data as empty table (initialized in constructor), don't reset it
+    if (!m_data.is_table()) {
+      m_data = toml::table{};
+    }
   }
   
   // Build paths in XDG hierarchy
@@ -126,11 +129,14 @@ std::error_code Config::Initialize(const std::string& app_name) {
       toml::value config_data = toml::parse(path);
       LOG(INFO) << "Loaded config from: " << path;
       
-      if (m_data.is_table()) {
-        MergeToml(m_data, config_data);
-        LOG(INFO) << "Merged config from: " << path;
-      } else {
-        m_data = config_data;
+      {
+        std::lock_guard<std::mutex> lock(m_data_mutex);
+        if (m_data.is_table()) {
+          MergeToml(m_data, config_data);
+          LOG(INFO) << "Merged config from: " << path;
+        } else {
+          m_data = config_data;
+        }
       }
       
       m_config_paths.push_back(path);
@@ -157,7 +163,11 @@ std::error_code Config::Load(const std::string& config_path) {
   LOG(INFO) << "Config::Load() called with path: " << config_path;
   
   try {
-    m_data = toml::parse(config_path);
+    toml::value loaded_data = toml::parse(config_path);
+    {
+      std::lock_guard<std::mutex> lock(m_data_mutex);
+      m_data = std::move(loaded_data);
+    }
     m_config_paths = {config_path};
     m_initialized = true;
     LOG(INFO) << "Successfully loaded TOML configuration from: " << config_path;
@@ -185,22 +195,31 @@ std::error_code Config::Reload() {
   }
   
   // If initialized with app_name (XDG hierarchy), re-initialize
+  std::error_code result;
+
   if (!m_app_name.empty()) {
     LOG(INFO) << "Reloading XDG hierarchy for app: " << m_app_name;
-    return Initialize(m_app_name);
+    result = Initialize(m_app_name);
+  } else {
+    // Otherwise reload single file
+    LOG(INFO) << "Reloading single config file: " << m_config_paths[0];
+    result = Load(m_config_paths[0]);
   }
-  
-  // Otherwise reload single file
-  LOG(INFO) << "Reloading single config file: " << m_config_paths[0];
-  return Load(m_config_paths[0]);
+
+  if (!result) {
+    ApplyOverrides();
+    NotifyReloadListeners();
+  }
+  return result;
 }
 
 bool Config::IsInitialized() const {
   return m_initialized;
 }
 
-const toml::value& Config::GetData() const {
-  return m_data;
+toml::value Config::GetData() const {
+  std::lock_guard<std::mutex> lock(m_data_mutex);
+  return m_data;  // Returns a copy
 }
 
 toml::value Config::InferValueType(const std::string& value_str) const {
@@ -246,12 +265,48 @@ toml::value Config::InferValueType(const std::string& value_str) const {
 
 void Config::SetOverride(const std::string& path, const std::string& value) {
   LOG(INFO) << "Setting override: " << path << " = " << value;
+
+  // Acquire both locks to prevent race between storing and applying override
+  std::lock_guard<std::mutex> overrides_lock(m_overrides_mutex);
+  std::lock_guard<std::mutex> data_lock(m_data_mutex);
   
+  m_overrides[path] = value;  // O(1) insert or update
+  
+  // Apply directly to m_data (locks already held)
+  ApplyOverrideToDataNoLock(path, value);
+}
+
+void Config::ApplyOverrides() {
+  std::unordered_map<std::string, std::string> overrides_copy;
+  {
+    std::lock_guard<std::mutex> lock(m_overrides_mutex);
+    overrides_copy = m_overrides;
+  }
+
+  if (overrides_copy.empty()) {
+    return;
+  }
+
+  LOG(INFO) << "Applying " << overrides_copy.size() << " override(s)";
+  for (const auto& [path, value] : overrides_copy) {
+    ApplyOverrideToData(path, value);
+  }
+}
+
+void Config::ApplyOverrideToData(const std::string& path, const std::string& value) {
+  std::lock_guard<std::mutex> lock(m_data_mutex);
+  ApplyOverrideToDataNoLock(path, value);
+}
+
+void Config::ApplyOverrideToDataNoLock(const std::string& path, const std::string& value) {
+  // Assumes m_data_mutex is already held by caller
+  LOG(INFO) << "Applying override: " << path << " = " << value;
+
   // Parse path: "infr_main.port" -> ["infr_main", "port"]
   std::vector<std::string> keys;
   size_t start = 0;
   size_t end = path.find('.');
-  
+
   while (end != std::string::npos) {
     std::string key = path.substr(start, end - start);
     if (key.empty()) {
@@ -262,49 +317,77 @@ void Config::SetOverride(const std::string& path, const std::string& value) {
     start = end + 1;
     end = path.find('.', start);
   }
-  
+
   std::string last_key = path.substr(start);
   if (last_key.empty()) {
     LOG(ERROR) << "Invalid override path (empty final key): " << path;
     return;
   }
   keys.push_back(std::move(last_key));
-  
+
   if (keys.empty()) {
     LOG(ERROR) << "Invalid override path: " << path;
     return;
   }
-  
+
   // Ensure m_data is a table
   if (!m_data.is_table()) {
     m_data = toml::table{};
   }
-  
+
   // Navigate to the target location, creating tables as needed
   toml::value* current = &m_data;
   for (size_t i = 0; i < keys.size() - 1; ++i) {
     const auto& key = keys[i];
-    
+
     if (!current->is_table()) {
       LOG(ERROR) << "Cannot set override: " << key << " is not a table";
       return;
     }
-    
+
     auto& table = current->as_table();
     if (!table.contains(key)) {
       table[key] = toml::table{};
     }
     current = &table[key];
   }
-  
+
   // Set the final value with type inference
   if (current->is_table()) {
     const auto& last_key = keys.back();
     auto& table = current->as_table();
     table[last_key] = InferValueType(value);
-    LOG(INFO) << "Successfully set override: " << path << " = " << value;
+    LOG(INFO) << "Successfully applied override: " << path << " = " << value;
   } else {
     LOG(ERROR) << "Cannot set override: parent is not a table";
+  }
+}
+
+void Config::RegisterReloadListener(std::function<void()> callback) {
+  std::lock_guard<std::mutex> lock(m_reload_listeners_mutex);
+  m_reload_listeners.push_back(std::move(callback));
+  LOG(INFO) << "Registered config reload listener, total listeners: "
+            << m_reload_listeners.size();
+}
+
+void Config::NotifyReloadListeners() {
+  std::vector<std::function<void()>> listeners_copy;
+  {
+    std::lock_guard<std::mutex> lock(m_reload_listeners_mutex);
+    listeners_copy = m_reload_listeners;
+  }
+
+  LOG(INFO) << "Notifying " << listeners_copy.size()
+            << " config reload listeners";
+
+  for (const auto& listener : listeners_copy) {
+    try {
+      listener();
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "Exception in config reload listener: " << e.what();
+    } catch (...) {
+      LOG(ERROR) << "Unknown exception in config reload listener";
+    }
   }
 }
 
