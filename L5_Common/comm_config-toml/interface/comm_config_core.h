@@ -126,9 +126,10 @@ class Config {
 
   /**
    * @brief Get parsed TOML data
-   * @return Reference to parsed TOML table
+   * @return Copy of parsed TOML table
+   * @note Returns a copy to prevent race conditions with concurrent modifications
    */
-  const toml::value& GetData() const;
+  toml::value GetData() const;
 
   /**
    * @brief Get configuration value of type T from specified path

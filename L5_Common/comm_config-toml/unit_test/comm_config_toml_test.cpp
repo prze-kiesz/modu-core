@@ -136,12 +136,12 @@ TEST_F(ConfigTest, ReloadInvokesRegisteredListeners) {
   std::error_code load_ec = config.Load(test_config_path_);
   EXPECT_FALSE(load_ec);
 
-  std::atomic<int> call_count{0};
+  int call_count = 0;
   config.RegisterReloadListener([&call_count]() { ++call_count; });
 
   std::error_code reload_ec = config.Reload();
   EXPECT_FALSE(reload_ec);
-  EXPECT_EQ(call_count.load(), 1);
+  EXPECT_EQ(call_count, 1);
 }
 
 TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
@@ -163,7 +163,7 @@ TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
   std::error_code init_ec = config.Initialize("test-app");
   EXPECT_FALSE(init_ec);
 
-  std::atomic<int> call_count{0};
+  int call_count = 0;
   config.RegisterReloadListener([&call_count]() { ++call_count; });
 
   // Now make config invalid so reload fails
@@ -174,7 +174,7 @@ TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
 
   std::error_code reload_ec = config.Reload();
   EXPECT_TRUE(reload_ec);
-  EXPECT_EQ(call_count.load(), 0);
+  EXPECT_EQ(call_count, 0);
 }
 
 TEST_F(ConfigTest, SetOverrideAcceptsIntValue) {

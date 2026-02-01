@@ -217,9 +217,9 @@ bool Config::IsInitialized() const {
   return m_initialized;
 }
 
-const toml::value& Config::GetData() const {
+toml::value Config::GetData() const {
   std::lock_guard<std::mutex> lock(m_data_mutex);
-  return m_data;
+  return m_data;  // Returns a copy
 }
 
 toml::value Config::InferValueType(const std::string& value_str) const {
