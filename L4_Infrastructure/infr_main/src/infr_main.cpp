@@ -10,7 +10,7 @@
 #include "infr_main.h"
 #include "infr_config.h"
 
-#include <comm_config_toml.h>
+#include <comm_config_client.h>
 #include <glog/logging.h>
 
 namespace infr {

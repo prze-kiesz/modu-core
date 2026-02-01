@@ -19,7 +19,8 @@ set(MODULE_SOURCES
 )
 
 set(MODULE_HEADERS
-    interface/comm_config_toml.h
+    interface/comm_config_core.h
+    interface/comm_config_client.h
 )
 
 ###############
@@ -56,6 +57,7 @@ target_link_libraries(${MODULE_TARGET} LINK_PRIVATE
 #
 if(BUILD_TESTING)
     add_subdirectory(unit_test)
+    add_subdirectory(integration_test)
 endif()
 
 ###############

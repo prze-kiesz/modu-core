@@ -6,7 +6,7 @@
  * @brief Unit tests for TOML configuration management
  */
 
-#include "comm_config_toml.h"
+#include "comm_config_core.h"
 
 #include <gtest/gtest.h>
 #include <fstream>
@@ -109,6 +109,72 @@ TEST_F(ConfigTest, ReloadSucceedsAfterLoad) {
   std::error_code ec = config.Reload();
   
   EXPECT_FALSE(ec);
+}
+
+TEST_F(ConfigTest, OverridesPersistAfterReload) {
+  CreateTestConfig("[test]\nport = 1000\n");
+
+  Config& config = Config::Instance();
+  std::error_code load_ec = config.Load(test_config_path_);
+  EXPECT_FALSE(load_ec);
+
+  config.SetOverride("test.port", "2000");
+
+  std::error_code reload_ec = config.Reload();
+  EXPECT_FALSE(reload_ec);
+
+  const auto& data = config.GetData();
+  ASSERT_TRUE(data.is_table());
+  const auto& test_table = data.as_table().at("test").as_table();
+  EXPECT_EQ(test_table.at("port").as_integer(), 2000);
+}
+
+TEST_F(ConfigTest, ReloadInvokesRegisteredListeners) {
+  CreateTestConfig("[test]\nvalue = 42\n");
+
+  Config& config = Config::Instance();
+  std::error_code load_ec = config.Load(test_config_path_);
+  EXPECT_FALSE(load_ec);
+
+  std::atomic<int> call_count{0};
+  config.RegisterReloadListener([&call_count]() { ++call_count; });
+
+  std::error_code reload_ec = config.Reload();
+  EXPECT_FALSE(reload_ec);
+  EXPECT_EQ(call_count.load(), 1);
+}
+
+TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
+  Config& config = Config::Instance();
+
+  // Use isolated XDG config path for this test
+  const std::string xdg_dir = test_dir_ + "/xdg";
+  const std::string app_dir = xdg_dir + "/test-app";
+  const std::string config_path = app_dir + "/config.toml";
+  std::filesystem::create_directories(app_dir);
+  setenv("XDG_CONFIG_HOME", xdg_dir.c_str(), 1);
+
+  // First, write valid config and initialize successfully
+  {
+    std::ofstream file(config_path);
+    file << "[test]\nvalue = 1\n";
+  }
+
+  std::error_code init_ec = config.Initialize("test-app");
+  EXPECT_FALSE(init_ec);
+
+  std::atomic<int> call_count{0};
+  config.RegisterReloadListener([&call_count]() { ++call_count; });
+
+  // Now make config invalid so reload fails
+  {
+    std::ofstream file(config_path);
+    file << "this is not valid TOML {]]}";
+  }
+
+  std::error_code reload_ec = config.Reload();
+  EXPECT_TRUE(reload_ec);
+  EXPECT_EQ(call_count.load(), 0);
 }
 
 TEST_F(ConfigTest, SetOverrideAcceptsIntValue) {

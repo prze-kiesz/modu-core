@@ -10,7 +10,7 @@
 #include "comm_main.h"
 
 #include <glog/logging.h>
-#include "comm_config_toml.h"
+#include "comm_config_core.h"
 #include "comm_terminate.h"
 
 #ifndef PROJECT_NAME
