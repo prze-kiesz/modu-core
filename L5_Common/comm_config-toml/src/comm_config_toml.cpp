@@ -268,24 +268,14 @@ void Config::SetOverride(const std::string& path, const std::string& value) {
 
   {
     std::lock_guard<std::mutex> lock(m_overrides_mutex);
-    bool updated = false;
-    for (auto& [key, val] : m_overrides) {
-      if (key == path) {
-        val = value;
-        updated = true;
-        break;
-      }
-    }
-    if (!updated) {
-      m_overrides.emplace_back(path, value);
-    }
+    m_overrides[path] = value;  // O(1) insert or update
   }
 
   ApplyOverrideToData(path, value);
 }
 
 void Config::ApplyOverrides() {
-  std::vector<std::pair<std::string, std::string>> overrides_copy;
+  std::unordered_map<std::string, std::string> overrides_copy;
   {
     std::lock_guard<std::mutex> lock(m_overrides_mutex);
     overrides_copy = m_overrides;

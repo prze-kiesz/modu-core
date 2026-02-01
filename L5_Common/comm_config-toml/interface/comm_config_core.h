@@ -15,6 +15,7 @@
 #include <string>
 #include <system_error>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <toml.hpp>
@@ -201,7 +202,7 @@ class Config {
   mutable std::mutex m_data_mutex;  // Protects m_data access
   std::vector<std::function<void()>> m_reload_listeners;
   mutable std::mutex m_reload_listeners_mutex;
-  std::vector<std::pair<std::string, std::string>> m_overrides;
+  std::unordered_map<std::string, std::string> m_overrides;  // O(1) lookup
   mutable std::mutex m_overrides_mutex;
 };
 

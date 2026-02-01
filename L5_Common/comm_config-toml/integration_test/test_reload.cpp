@@ -13,8 +13,10 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <csignal>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <thread>
@@ -25,9 +27,13 @@
 namespace {
 
 std::string CreateTempDir() {
-  std::string dir = "/tmp/modu-core-config-it-" + std::to_string(getpid());
-  std::filesystem::create_directories(dir);
-  return dir;
+  char tmpl[] = "/tmp/modu-core-config-it-XXXXXX";
+  char* result = mkdtemp(tmpl);
+  if (result == nullptr) {
+    LOG(ERROR) << "mkdtemp failed: " << std::strerror(errno);
+    throw std::runtime_error("Failed to create secure temp directory");
+  }
+  return std::string(result);
 }
 
 void WriteConfig(const std::string& path, int value) {
@@ -82,11 +88,14 @@ int main(int argc, char* argv[]) {
 
   std::atomic<int> reload_count{0};
   std::atomic<int> last_value{GetValueFromConfig()};
+  std::mutex reload_mutex;
+  std::condition_variable reload_cv;
 
-  comm::Config::Instance().RegisterReloadListener([&reload_count, &last_value]() {
+  comm::Config::Instance().RegisterReloadListener([&]() {
     ++reload_count;
     last_value = GetValueFromConfig();
     LOG(INFO) << "Reload listener invoked, value=" << last_value.load();
+    reload_cv.notify_one();
   });
 
   comm::Terminate::Instance().RegisterConfigReloadListener([]() {
@@ -103,11 +112,15 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::thread signal_thread([&config_path]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  std::thread signal_thread([&]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     WriteConfig(config_path, 2);
     kill(getpid(), SIGHUP);
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    
+    // Wait for reload to complete
+    std::unique_lock<std::mutex> lock(reload_mutex);
+    reload_cv.wait_for(lock, std::chrono::seconds(2), [&]() { return reload_count.load() >= 1; });
+    
     kill(getpid(), SIGTERM);
   });
 
