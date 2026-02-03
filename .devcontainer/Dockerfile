@@ -166,15 +166,6 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     cmake --install build && \
     ldconfig && \
     rm -rf /tmp/googletest
-
-# Build and install Catch2 from source (BDD-style testing framework)
-RUN git clone --branch v3.5.2 https://github.com/catchorg/Catch2.git /tmp/catch2 && \
-    cd /tmp/catch2 && \
-    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF && \
-    cmake --build build -j"$(nproc)" && \
-    cmake --install build && \
-    ldconfig && \
-    rm -rf /tmp/catch2
     
 # do not require password for sudo
 RUN  echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
