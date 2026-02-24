@@ -133,12 +133,9 @@ RUN git clone --branch asio-1-30-2 https://github.com/chriskohlhoff/asio.git /tm
     cd / && rm -rf /tmp/asio
 
 # Build and install TCLAP (header-only command line parser) from source
-RUN git clone --branch v1.2.5 https://github.com/mirror/tclap.git /tmp/tclap && \
-    cd /tmp/tclap && \
-    ./autotools.sh && \
-    ./configure --prefix=/usr/local && \
-    make install && \
-    cd / && rm -rf /tmp/tclap
+RUN git clone --branch v1.2.5 --depth 1 https://github.com/mirror/tclap.git /tmp/tclap && \
+    cp -r /tmp/tclap/include/tclap /usr/local/include/ && \
+    rm -rf /tmp/tclap
 
 
 # Build and install gRPC and grpc_cli from source
