@@ -115,6 +115,28 @@ RUN git clone --branch v3.8.1 https://github.com/ToruNiina/toml11.git /tmp/toml1
     cmake --install build && \
     rm -rf /tmp/toml11
 
+# Build and install nlohmann_json (JSON for Modern C++) from source
+RUN git clone --branch v3.11.3 https://github.com/nlohmann/json.git /tmp/nlohmann_json && \
+    cd /tmp/nlohmann_json && \
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DJSON_BuildTests=OFF \
+    -DJSON_Install=ON && \
+    cmake --install build && \
+    rm -rf /tmp/nlohmann_json
+
+# Build and install Asio (header-only C++ networking library) from source
+RUN git clone --branch asio-1-30-2 https://github.com/chriskohlhoff/asio.git /tmp/asio && \
+    cd /tmp/asio/asio && \
+    ./autogen.sh && \
+    ./configure --prefix=/usr/local --without-boost && \
+    make install && \
+    cd / && rm -rf /tmp/asio
+
+# Build and install TCLAP (header-only command line parser) from source
+RUN git clone --branch v1.2.5 --depth 1 https://github.com/mirror/tclap.git /tmp/tclap && \
+    cp -r /tmp/tclap/include/tclap /usr/local/include/ && \
+    rm -rf /tmp/tclap
+
 
 # Build and install gRPC and grpc_cli from source
 #RUN git clone --recurse-submodules -b v1.60.1 https://github.com/grpc/grpc /tmp/grpc && \
@@ -166,6 +188,19 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     cmake --install build && \
     ldconfig && \
     rm -rf /tmp/googletest
+
+# Build and install cucumber-cpp (BDD testing framework) from source
+RUN git clone --branch v0.8.0 https://github.com/cucumber/cucumber-cpp.git /tmp/cucumber-cpp && \
+    cd /tmp/cucumber-cpp && \
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCUKE_ENABLE_EXAMPLES=OFF \
+    -DCUKE_TESTS_VALGRIND=OFF \
+    -DCUKE_DISABLE_TESTS=ON && \
+    cmake --build build -j"$(nproc)" && \
+    cmake --install build && \
+    ldconfig && \
+    rm -rf /tmp/cucumber-cpp
     
 # do not require password for sudo
 RUN  echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
