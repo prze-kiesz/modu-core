@@ -190,13 +190,15 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     rm -rf /tmp/googletest
 
 # Build and install cucumber-cpp (BDD testing framework) from source
-RUN git clone --branch v0.8.0 https://github.com/cucumber/cucumber-cpp.git /tmp/cucumber-cpp && \
+RUN git clone --branch v0.8.0 --depth 1 https://github.com/cucumber/cucumber-cpp.git /tmp/cucumber-cpp && \
     cd /tmp/cucumber-cpp && \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_SHARED_LIBS=ON \
+    -DCUKE_ENABLE_GTEST=ON \
     -DCUKE_ENABLE_EXAMPLES=OFF \
+    -DCUKE_TESTS_UNIT=OFF \
     -DCUKE_TESTS_VALGRIND=OFF \
-    -DCUKE_DISABLE_TESTS=ON && \
+    -DCUKE_CODE_COVERAGE=OFF && \
     cmake --build build -j"$(nproc)" && \
     cmake --install build && \
     ldconfig && \
