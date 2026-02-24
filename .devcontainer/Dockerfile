@@ -166,6 +166,20 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     cmake --install build && \
     ldconfig && \
     rm -rf /tmp/googletest
+
+# Build and install cucumber-cpp (BDD testing framework) from source
+RUN git clone --branch v0.6.0 https://github.com/cucumber/cucumber-cpp.git /tmp/cucumber-cpp && \
+    cd /tmp/cucumber-cpp && \
+    git submodule update --init --recursive && \
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
+    -DCUKE_ENABLE_EXAMPLES=OFF \
+    -DCUKE_TESTS_VALGRIND=OFF \
+    -DCUKE_ENABLE_BOOST_TEST=OFF && \
+    cmake --build build -j"$(nproc)" && \
+    cmake --install build && \
+    ldconfig && \
+    rm -rf /tmp/cucumber-cpp
     
 # do not require password for sudo
 RUN  echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
