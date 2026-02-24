@@ -11,6 +11,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(BUILD_TESTING ON)
 
+# Options for test builds
+option(ENABLE_ACCEPTANCE_TESTS "Build BDD acceptance tests with cucumber-cpp" OFF)
+option(ENABLE_TEST_HOOKS "Enable test hooks in production code for BDD tests" OFF)
+
 # Enable CTest
 enable_testing()
 
@@ -61,3 +65,10 @@ add_subdirectory(main)
 target_link_libraries(${CMAKE_PROJECT_NAME}
 		${MODU_CORE_COMMON_LIBS}
 )
+
+# ####################
+# Acceptance tests with cucumber-cpp (optional)
+if(ENABLE_ACCEPTANCE_TESTS OR ENABLE_TEST_HOOKS)
+  message(STATUS "Acceptance tests enabled")
+  add_subdirectory(acceptance_test)
+endif()

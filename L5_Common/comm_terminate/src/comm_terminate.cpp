@@ -18,6 +18,10 @@
 #include <exception>
 #include <string>
 
+#ifdef ENABLE_TEST_HOOKS
+#include "test_hooks.h"
+#endif
+
 namespace {
 /**
  * @brief Converts POSIX signal number to human-readable description
@@ -111,6 +115,10 @@ void Terminate::WaitForTerminateSignal() {
         
         // Notify systemd about config reload
         sd_notify(0, "RELOADING=1");
+
+#ifdef ENABLE_TEST_HOOKS
+        TEST_HOOK(OnConfigReloadStarted());
+#endif
         
         // Queue event for processing thread to handle
         // Note: READY=1 will be sent by event processor after listeners complete
@@ -136,6 +144,10 @@ void Terminate::WaitForTerminateSignal() {
           
           // Notify systemd that graceful shutdown has begun
           sd_notify(0, "STOPPING=1");
+
+#ifdef ENABLE_TEST_HOOKS
+          TEST_HOOK(OnTerminationSignalReceived(signal));
+#endif
           
           // Store termination reason for WaitForTermination()
           m_terminate_reason = GetSignalName(signal);
@@ -158,6 +170,10 @@ void Terminate::WaitForTerminateSignal() {
         
         // Notify systemd that graceful shutdown has begun
         sd_notify(0, "STOPPING=1");
+
+#ifdef ENABLE_TEST_HOOKS
+        TEST_HOOK(OnTerminationSignalReceived(signal));
+#endif
         
         // Store termination reason for WaitForTermination()
         m_terminate_reason = GetSignalName(signal);
