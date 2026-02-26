@@ -9,10 +9,7 @@
 #include "infr_config.h"
 #include <comm_config_client.h>
 #include <glog/logging.h>
-
-#ifdef ENABLE_TEST_HOOKS
 #include "test_hooks.h"
-#endif
 
 namespace infr {
 
@@ -77,10 +74,7 @@ void InfrConfig::Initialize() {
 
   m_initialized = true;
   LOG(INFO) << "InfrConfig initialized successfully";
-
-#ifdef ENABLE_TEST_HOOKS
   TEST_HOOK(OnInfrConfigInitialized());
-#endif
 }
 
 InfrMainConfig InfrConfig::Get() const {
@@ -96,11 +90,7 @@ void InfrConfig::RegisterReloadListener(std::function<void()> listener) {
 
 void InfrConfig::OnConfigReload() {
   LOG(INFO) << "InfrConfig received reload notification from comm::Config";
-
-#ifdef ENABLE_TEST_HOOKS
   TEST_HOOK(OnConfigReloadStarted());
-#endif
-
   Reload();
   NotifyListeners();
 }
@@ -116,17 +106,11 @@ void InfrConfig::Reload() {
     }
 
     LOG(INFO) << "InfrConfig reloaded successfully";
-
-#ifdef ENABLE_TEST_HOOKS
     TEST_HOOK(OnConfigReloadCompleted("infr_main"));
-#endif
 
   } catch (const std::exception& e) {
     LOG(ERROR) << "Failed to reload InfrConfig: " << e.what();
-
-#ifdef ENABLE_TEST_HOOKS
     TEST_HOOK(OnConfigReloadFailed(e.what()));
-#endif
   }
 }
 
