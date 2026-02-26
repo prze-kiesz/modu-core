@@ -32,7 +32,7 @@ include(GNUInstallDirs)
 # ####################
 # Build CMAKE_PREFIX_PATH for find_package() to locate -config.cmake files
 message(STATUS "Loading modules from layered architecture...")
-set(LAYER_DIRECTORIES L1_Presentation L2_Services L3_Storage L4_Infrastructure L5_Common)
+set(LAYER_DIRECTORIES L0_AcceptanceTests L1_Presentation L2_Services L3_Storage L4_Infrastructure L5_Common)
 
 foreach(LAYER ${LAYER_DIRECTORIES})
     set(LAYER_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${LAYER}")
@@ -70,5 +70,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 # Acceptance tests with cucumber-cpp (optional)
 if(ENABLE_ACCEPTANCE_TESTS OR ENABLE_TEST_HOOKS)
   message(STATUS "Acceptance tests enabled")
-  add_subdirectory(acceptance_test)
+  find_package("test_bdd_cucumber")
 endif()

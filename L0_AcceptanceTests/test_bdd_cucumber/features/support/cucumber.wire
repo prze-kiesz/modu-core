@@ -1,0 +1,7 @@
+---
+host: localhost
+port: 3902
+timeout:
+  connect: 5
+  invoke: 60
+
