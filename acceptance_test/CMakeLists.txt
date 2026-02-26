@@ -16,13 +16,24 @@ add_compile_definitions(ENABLE_TEST_HOOKS)
 
 # Find dependencies
 find_package(GTest REQUIRED)
-find_package(cucumber-cpp)
+find_package(toml11 REQUIRED)
+find_package(glog REQUIRED)
 
-if(NOT cucumber-cpp_FOUND)
+# Check if cucumber-cpp is installed
+find_library(CUCUMBER_CPP_LIBRARY NAMES cucumber-cpp PATHS /usr/local/lib)
+find_path(CUCUMBER_CPP_INCLUDE_DIR cucumber-cpp/autodetect.hpp PATHS /usr/local/include)
+
+if(NOT CUCUMBER_CPP_LIBRARY OR NOT CUCUMBER_CPP_INCLUDE_DIR)
   message(WARNING "cucumber-cpp not found. Acceptance tests will not be built.")
+  message(STATUS "  CUCUMBER_CPP_LIBRARY: ${CUCUMBER_CPP_LIBRARY}")
+  message(STATUS "  CUCUMBER_CPP_INCLUDE_DIR: ${CUCUMBER_CPP_INCLUDE_DIR}")
   message(STATUS "Install with: sudo apt-get install libcucumber-cpp-dev")
   return()
 endif()
+
+message(STATUS "Found cucumber-cpp:")
+message(STATUS "  Library: ${CUCUMBER_CPP_LIBRARY}")
+message(STATUS "  Include: ${CUCUMBER_CPP_INCLUDE_DIR}")
 
 # Cucumber test executable
 add_executable(cucumber_tests
@@ -35,9 +46,26 @@ add_executable(cucumber_tests
   step_definitions/config_steps.cpp
   step_definitions/terminate_steps.cpp
   step_definitions/startup_steps.cpp
+  
+  # Include object files from application modules (OBJECT libraries)
+  $<TARGET_OBJECTS:modu-core-infr_main>
+  $<TARGET_OBJECTS:modu-core-comm_config-toml>
+  $<TARGET_OBJECTS:modu-core-comm_terminate>
+  $<TARGET_OBJECTS:modu-core-comm_main>
 )
 
+# Set unique CUKE_OBJECT_PREFIX for each step definition file to avoid conflicts
+set_source_files_properties(step_definitions/config_steps.cpp 
+  PROPERTIES COMPILE_DEFINITIONS "CUKE_OBJECT_PREFIX=CukeConfig")
+set_source_files_properties(step_definitions/startup_steps.cpp 
+  PROPERTIES COMPILE_DEFINITIONS "CUKE_OBJECT_PREFIX=CukeStartup")
+set_source_files_properties(step_definitions/terminate_steps.cpp 
+  PROPERTIES COMPILE_DEFINITIONS "CUKE_OBJECT_PREFIX=CukeTerminate")
+set_source_files_properties(support/cucumber_hooks.cpp 
+  PROPERTIES COMPILE_DEFINITIONS "CUKE_OBJECT_PREFIX=CukeHooks")
+
 target_include_directories(cucumber_tests PRIVATE
+  ${CUCUMBER_CPP_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/support
   ${CMAKE_SOURCE_DIR}/L4_Infrastructure/infr_main/interface
   ${CMAKE_SOURCE_DIR}/L4_Infrastructure/infr_main/src
@@ -47,17 +75,11 @@ target_include_directories(cucumber_tests PRIVATE
 )
 
 target_link_libraries(cucumber_tests PRIVATE
-  cucumber-cpp::cucumber-cpp
+  ${CUCUMBER_CPP_LIBRARY}
   GTest::gtest
   GTest::gmock
   glog::glog
   toml11::toml11
-  
-  # Application modules (with test hooks enabled)
-  infr_main
-  comm_config-toml
-  comm_terminate
-  comm_main
 )
 
 target_compile_features(cucumber_tests PRIVATE cxx_std_17)

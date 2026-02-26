@@ -1,0 +1,6 @@
+
+[infr_main]
+device_name = "default_device"
+port = 8080
+enable_logging = true
+timeout_seconds = 30.0

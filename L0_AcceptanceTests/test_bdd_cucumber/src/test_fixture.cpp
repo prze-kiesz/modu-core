@@ -144,8 +144,8 @@ void TestFixture::RunApplication() {
   try {
     LOG(INFO) << "[TEST_FIXTURE] Starting application main loop";
 
-    // Initialize Google Logging
-    google::InitGoogleLogging("modu-core-test");
+    // Google Logging already initialized by cucumber_hooks (BeforeAllSteps)
+    // Just set logging flags
     FLAGS_logtostderr = 1;
 
     // This would normally call your main application entry point

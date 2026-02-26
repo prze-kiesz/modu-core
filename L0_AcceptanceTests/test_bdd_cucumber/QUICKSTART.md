@@ -1,10 +1,20 @@
 # Quick Start - BDD Acceptance Tests
 
-## 1. Install Dependencies
+## 1. Prerequisites
+
+Ensure you have:
+- cucumber-cpp v0.8.0 (static, with GTest)
+- Ruby 3.x
+- **Cucumber 9.2.0** (NOT 10.x)
+- **cucumber-wire 8.0.0**
 
 ```bash
-sudo apt-get install libcucumber-cpp-dev
+# If missing, install compatible versions:
+sudo gem install cucumber -v 9.2.0
+sudo gem install cucumber-wire -v 8.0.0
 ```
+
+**Note:** The development container includes all prerequisites.
 
 ## 2. Build with Test Hooks
 
