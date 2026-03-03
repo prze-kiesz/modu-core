@@ -172,7 +172,7 @@ RUN apt update && apt install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv && \
-    pip3 install --break-system-packages pytest pytest-timeout && \
+    pip3 install --break-system-packages pytest pytest-timeout pytest-bdd && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
 # do not require password for sudo
