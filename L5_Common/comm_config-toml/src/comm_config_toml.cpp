@@ -173,10 +173,10 @@ std::error_code Config::Load(const std::string& config_path) {
     LOG(INFO) << "Successfully loaded TOML configuration from: " << config_path;
     return make_error_code(ConfigError::Success);
   } catch (const toml::syntax_error& e) {
-    LOG(ERROR) << "TOML parse error: " << e.what();
+    LOG(WARNING) << "TOML parse error: " << e.what();
     return make_error_code(ConfigError::ParseError);
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Failed to load config file: " << e.what();
+    LOG(WARNING) << "Failed to load config file: " << e.what();
     return make_error_code(ConfigError::FileNotFound);
   }
 }

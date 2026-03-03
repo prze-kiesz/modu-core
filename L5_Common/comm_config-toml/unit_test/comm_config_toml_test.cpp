@@ -8,13 +8,13 @@
 
 #include "comm_config_core.h"
 
+#include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
 
 namespace comm {
-
 class ConfigTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() {
@@ -87,16 +87,16 @@ TEST_F(ConfigTest, LoadAcceptsPath) {
 TEST_F(ConfigTest, LoadNonExistentFileReturnsError) {
   Config& config = Config::Instance();
   std::error_code ec = config.Load("/nonexistent/path/config.toml");
-  
+
   EXPECT_TRUE(ec);
 }
 
 TEST_F(ConfigTest, LoadInvalidTomlReturnsError) {
   CreateTestConfig("this is not valid TOML {]]}");
-  
+
   Config& config = Config::Instance();
   std::error_code ec = config.Load(test_config_path_);
-  
+
   EXPECT_TRUE(ec);
 }
 
@@ -166,13 +166,17 @@ TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
   int call_count = 0;
   config.RegisterReloadListener([&call_count]() { ++call_count; });
 
-  // Now make config invalid so reload fails
+  // Now make config invalid so reload fails — suppress expected error log
   {
     std::ofstream file(config_path);
     file << "this is not valid TOML {]]}";
   }
 
-  std::error_code reload_ec = config.Reload();
+  std::error_code reload_ec;
+  {
+
+    reload_ec = config.Reload();
+  }
   EXPECT_TRUE(reload_ec);
   EXPECT_EQ(call_count, 0);
 }
@@ -295,3 +299,11 @@ TEST_F(ConfigTest, ErrorCategoryReturnsCorrectMessages) {
 }
 
 }  // namespace comm
+
+int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
+  testing::InitGoogleTest(&argc, argv);
+  const int result = RUN_ALL_TESTS();
+  google::ShutdownGoogleLogging();
+  return result;
+}

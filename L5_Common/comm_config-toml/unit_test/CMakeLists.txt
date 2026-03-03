@@ -28,7 +28,7 @@ add_executable(${TEST_TARGET}
 #
 target_link_libraries(${TEST_TARGET}
     PRIVATE
-        GTest::gtest_main
+        GTest::gtest
         GTest::gmock
         glog::glog
 )
