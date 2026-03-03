@@ -130,6 +130,14 @@ jobs:
           cd build
           ctest --output-on-failure --verbose
 
+      - name: Run acceptance tests (pytest)
+        run: |
+          pytest L0_AcceptanceTests/test_pytest/ \
+            -v --tb=short \
+            --junitxml=pytest-results-${{ matrix.build_type }}.xml
+        env:
+          MODU_CORE_BINARY: ${{ github.workspace }}/build/main/modu-core
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -138,6 +146,7 @@ jobs:
           path: |
             build/Testing/Temporary/LastTest.log
             build/Testing/Temporary/LastTestsFailed.log
+            pytest-results-${{ matrix.build_type }}.xml
           if-no-files-found: ignore
 
       - name: Upload build artifacts
@@ -153,8 +162,19 @@ jobs:
       - name: Test Summary
         if: always()
         run: |
-          cd build
           echo "## Test Summary (${{ matrix.build_type }})" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Unit / Integration (ctest)" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          ctest --verbose 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY
+          cd build && ctest --verbose 2>&1 | tail -20 >> $GITHUB_STEP_SUMMARY && cd ..
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Acceptance tests (pytest)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f pytest-results-${{ matrix.build_type }}.xml ]; then
+            echo "Results saved in pytest-results-${{ matrix.build_type }}.xml" >> $GITHUB_STEP_SUMMARY
+          fi
+          pytest L0_AcceptanceTests/test_pytest/ -v --tb=short 2>&1 | tail -30 >> $GITHUB_STEP_SUMMARY || true
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        env:
+          MODU_CORE_BINARY: ${{ github.workspace }}/build/main/modu-core
