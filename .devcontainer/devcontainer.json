@@ -12,7 +12,8 @@
     //     }
     // },
     "mounts": [
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind,readonly"
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,type=bind,readonly",
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.config/gh,target=/home/ubuntu/.config/gh,type=bind"
     ],
     "remoteEnv": {
         "EULA": "1"
@@ -29,7 +30,8 @@
                 "llvm-vs-code-extensions.vscode-clangd",   // Clangd (C++ indexer)
                 "github.copilot",                          // GitHub Copilot
                 "github.copilot-chat",                     // GitHub Copilot Chat 
-                "ms-vscode.remote-ssh"                     // Remote SSH 
+                "ms-vscode.remote-ssh",                    // Remote SSH
+                "ms-python.python"                         // Python (pytest support)
             ]
         }
     }
