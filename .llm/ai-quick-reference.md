@@ -137,6 +137,132 @@ cd build && ctest -V -R <test_pattern>
 cd build && make coverage
 ```
 
+### Unit Test Custom main() (required for glog)
+```cpp
+// unit_test/<module>_test.cpp
+#include <glog/logging.h>
+#include <gtest/gtest.h>
+
+// ... test fixtures and TEST_F() ...
+
+int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
+  ::testing::InitGoogleTest(&argc, argv);
+  int result = RUN_ALL_TESTS();
+  google::ShutdownGoogleLogging();
+  return result;
+}
+```
+```cmake
+# unit_test/CMakeLists.txt — use GTest::gtest, NOT GTest::gtest_main
+target_link_libraries(${TEST_TARGET} GTest::gtest glog::glog ...)
+```
+
+## 🎭 Acceptance Tests (pytest-bdd)
+
+Acceptance tests live in `L0_AcceptanceTests/test_pytest/` and are **black-box**
+tests that run the compiled `modu-core` binary.
+
+### Directory Structure
+```
+L0_AcceptanceTests/test_pytest/
+├── pytest.ini                    # log_cli = true, log_cli_level = INFO
+├── requirements.txt              # pytest-bdd, pytest-timeout
+├── conftest.py                   # shared BDD step definitions
+├── helpers/
+│   ├── __init__.py
+│   └── log_watcher.py           # LogWatcher class
+├── application_lifecycle/
+│   ├── features/startup_shutdown.feature
+│   └── test_startup_shutdown.py
+└── configuration/
+    ├── features/config_reload.feature
+    └── test_config_reload.py
+```
+
+### Running Acceptance Tests
+```bash
+# Requires binary — use build-test output or build output
+MODU_CORE_BINARY=./build-test/main/modu-core \
+  pytest L0_AcceptanceTests/test_pytest/ -v
+
+# Run single functional area
+pytest L0_AcceptanceTests/test_pytest/configuration/ -v
+
+# Run matching test name
+pytest L0_AcceptanceTests/test_pytest/ -v -k "reload"
+
+# Show live logs (already on by default via pytest.ini)
+pytest L0_AcceptanceTests/test_pytest/ -v -s
+```
+
+### Writing a New Acceptance Test
+
+1. **Add a scenario to a `.feature` file** (or create a new one):
+```gherkin
+# L0_AcceptanceTests/test_pytest/configuration/features/config_reload.feature
+Scenario: My new scenario
+  Given the application is running
+  When I do something
+  Then the log contains "Expected message"
+```
+
+2. **Implement steps in `test_<area>.py`**:
+```python
+from pytest_bdd import scenario, given, when, then
+from pathlib import Path
+import logging
+
+_log = logging.getLogger(__name__)
+
+@scenario("features/config_reload.feature", "My new scenario")
+def test_my_new_scenario():
+    pass
+
+@when("I do something")
+def do_something(app):
+    # app is the RunningApp fixture from conftest.py
+    mark = app.logs.mark()         # snapshot current log position
+    app.do_action()
+    app.logs.wait_for("Expected message", from_mark=mark, timeout=5.0)
+```
+
+3. **Use `LogWatcher` correctly** — the `from_mark` parameter is critical
+   when checking logs that must appear AFTER an event (e.g., SIGHUP reload):
+```python
+# WRONG — may match startup logs
+app.logs.wait_for("Configuration initialized", timeout=5.0)
+
+# CORRECT — only matches lines after the reload signal
+mark = app.logs.mark()
+os.kill(app.pid, signal.SIGHUP)
+app.logs.wait_for("Configuration initialized", from_mark=mark, timeout=5.0)
+```
+
+4. **Shared steps** (app is running, log contains, etc.) are in `conftest.py` —
+   don't duplicate them.
+
+### LogWatcher API
+```python
+from helpers.log_watcher import LogWatcher
+
+watcher = LogWatcher(process)        # wraps a subprocess.Popen object
+watcher.wait_for("pattern", timeout=5.0)            # searches from start
+watcher.wait_for("pattern", from_mark=mark, timeout=5.0)  # after mark
+mark = watcher.mark()               # returns current line index (snapshot)
+watcher.get_all_lines()             # returns list of all lines seen so far
+```
+
+### Logging in Step Definitions
+Add `_log.info()` calls so pytest live log output (`log_cli = true`) shows
+what was matched:
+```python
+@then(parsers.parse('the log contains "{text}"'))
+def log_contains(app, text):
+    matched = app.logs.wait_for(text, timeout=5.0)
+    _log.info("log match  | %s", matched)
+```
+
 ## 🔍 Code Quality Checks
 
 ### Static Analysis
@@ -153,7 +279,8 @@ find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 
 ### Pre-commit Checklist
 - [ ] Code builds without warnings: `make -j$(nproc)`
-- [ ] All tests pass: `ctest --output-on-failure`
+- [ ] Unit tests pass: `ctest --output-on-failure`
+- [ ] Acceptance tests pass: `MODU_CORE_BINARY=./build-test/main/modu-core pytest L0_AcceptanceTests/test_pytest/ -v`
 - [ ] Code formatted: `clang-format` applied
 - [ ] No clang-tidy issues: `./scripts/run-clang-tidy.sh`
 - [ ] Commit message follows conventions
@@ -163,6 +290,8 @@ find . -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 
 ### Layer Dependencies
 ```
+L0_AcceptanceTests (black-box — depends on compiled binary only)
+     ↑ tests the binary from
 L1_Presentation
   ↓ can depend on
 L2_Services
@@ -175,7 +304,8 @@ L5_Common
 ```
 
 **NEVER**: Lower layers depending on higher layers  
-**NEVER**: Circular dependencies between modules
+**NEVER**: Circular dependencies between modules  
+**NOTE**: L0 tests the compiled binary only — no source-level dependency on any layer
 
 ### Configuration System (XDG Hierarchy)
 ```cpp
@@ -364,13 +494,18 @@ echo "1. Formatting check..."
 find L*/ main/ -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -Werror
 
 echo "2. Build check..."
-cd build && make -j$(nproc)
+cd build-test && make -j$(nproc)
 
-echo "3. Test check..."
+echo "3. Unit test check..."
 ctest --output-on-failure
 
-echo "4. Static analysis..."
-cd .. && ./scripts/run-clang-tidy.sh
+echo "4. Acceptance test check..."
+cd ..
+MODU_CORE_BINARY=./build-test/main/modu-core \
+  pytest L0_AcceptanceTests/test_pytest/ -v
+
+echo "5. Static analysis..."
+./scripts/run-clang-tidy.sh
 
 echo "✅ All checks passed! Ready for PR."
 ```
@@ -380,8 +515,10 @@ echo "✅ All checks passed! Ready for PR."
 - **Architecture questions**: Read `.llm/architecture.md`
 - **Coding style**: Check `.llm/coding-standards.md`
 - **Module creation**: Follow `docs/MODULE_TEMPLATE.md`
+- **Acceptance tests**: Read `L0_AcceptanceTests/test_pytest/README.md`
 - **CI failures**: Check GitHub Actions logs
-- **Test failures**: Run with `ctest -V -R <test_name>`
+- **Unit test failures**: Run with `ctest -V -R <test_name>`
+- **Acceptance test failures**: Run with `pytest -v -s -k <test_name>` and check live logs
 
 ---
 
