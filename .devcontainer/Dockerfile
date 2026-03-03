@@ -166,7 +166,15 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     cmake --install build && \
     ldconfig && \
     rm -rf /tmp/googletest
-    
+
+# Install Python3 and pytest for acceptance tests
+RUN apt update && apt install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv && \
+    pip3 install --break-system-packages pytest pytest-timeout && \
+    apt clean && rm -rf /var/lib/apt/lists/*
+
 # do not require password for sudo
 RUN  echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
