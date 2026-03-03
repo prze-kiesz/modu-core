@@ -15,17 +15,6 @@
 #include <cstdlib>
 
 namespace comm {
-
-/**
- * RAII guard that suppresses glog output for the duration of its lifetime.
- * Use in tests that intentionally trigger error paths in production code
- * to avoid misleading "Error:" lines in test output.
- */
-class SuppressLogs {
- public:
-  SuppressLogs() { google::SetStderrLogging(google::FATAL); }
-  ~SuppressLogs() { google::SetStderrLogging(google::INFO); }
-};
 class ConfigTest : public ::testing::Test {
  protected:
   static void SetUpTestSuite() {
@@ -96,7 +85,6 @@ TEST_F(ConfigTest, LoadAcceptsPath) {
 }
 
 TEST_F(ConfigTest, LoadNonExistentFileReturnsError) {
-  SuppressLogs suppress;
   Config& config = Config::Instance();
   std::error_code ec = config.Load("/nonexistent/path/config.toml");
 
@@ -104,7 +92,6 @@ TEST_F(ConfigTest, LoadNonExistentFileReturnsError) {
 }
 
 TEST_F(ConfigTest, LoadInvalidTomlReturnsError) {
-  SuppressLogs suppress;
   CreateTestConfig("this is not valid TOML {]]}");
 
   Config& config = Config::Instance();
@@ -187,7 +174,7 @@ TEST_F(ConfigTest, ReloadDoesNotNotifyOnFailure) {
 
   std::error_code reload_ec;
   {
-    SuppressLogs suppress;
+
     reload_ec = config.Reload();
   }
   EXPECT_TRUE(reload_ec);
