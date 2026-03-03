@@ -11,6 +11,7 @@ MODU_CORE_BINARY
     Default: <workspace_root>/build-test/main/modu-core
 """
 
+import logging
 import os
 import signal
 import subprocess
@@ -19,6 +20,8 @@ from pathlib import Path
 
 import pytest
 from pytest_bdd import given, when, then, parsers
+
+_log = logging.getLogger(__name__)
 
 from helpers.log_watcher import LogWatcher
 
@@ -156,7 +159,8 @@ def launch_app(binary_path: Path, toml_config_dir: Path):
 def app_is_running(launch_app):
     """Start the application and wait until it is fully ready."""
     app = launch_app()
-    app.logs.wait_for("Waiting for application termination", timeout=10)
+    matched = app.logs.wait_for("Waiting for application termination", timeout=10)
+    _log.info("app ready  | %s", matched)
     return app
 
 
@@ -177,7 +181,8 @@ def send_sighup(running_app):
 
 @then(parsers.parse('the log contains "{message}"'))
 def log_contains(running_app, message):
-    running_app.logs.wait_for(message, timeout=10)
+    matched = running_app.logs.wait_for(message, timeout=10)
+    _log.info("log match  | %s", matched)
 
 
 @then(parsers.parse("the exit code is {code:d}"))

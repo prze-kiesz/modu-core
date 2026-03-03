@@ -65,20 +65,38 @@ class LogWatcher:
         with self._lock:
             return list(self._lines)
 
+    def mark(self) -> int:
+        """
+        Return the current number of captured lines.
+
+        Use the returned value as ``from_mark`` in a subsequent ``wait_for()``
+        call to restrict matching to lines that arrive *after* this point.
+
+        Example::
+            pos = app.logs.mark()
+            app.sighup()
+            app.logs.wait_for("Reload complete", from_mark=pos)
+        """
+        with self._lock:
+            return len(self._lines)
+
     def wait_for(
         self,
         pattern: str,
         timeout: float = 10.0,
         regexp: bool = False,
+        from_mark: int = 0,
     ) -> str:
         """
         Block until a line matching *pattern* appears in the log, or raise
         TimeoutError.
 
         Args:
-            pattern: Substring to search for (or regex if regexp=True).
-            timeout: Maximum seconds to wait.
-            regexp: If True, treat pattern as a regular expression.
+            pattern:   Substring to search for (or regex if regexp=True).
+            timeout:   Maximum seconds to wait.
+            regexp:    If True, treat pattern as a regular expression.
+            from_mark: Start scanning from this line index (see :meth:`mark`).
+                       Defaults to 0 (scan from the beginning).
 
         Returns:
             The matched line.
@@ -87,7 +105,7 @@ class LogWatcher:
             TimeoutError: If no matching line is found within *timeout* seconds.
         """
         deadline = time.monotonic() + timeout
-        checked_up_to: int = 0
+        checked_up_to: int = from_mark
 
         while True:
             with self._lock:
