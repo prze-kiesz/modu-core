@@ -190,25 +190,17 @@ RUN git clone --branch v1.16.0 https://github.com/google/googletest.git /tmp/goo
     rm -rf /tmp/googletest
 
 # Build and install cucumber-cpp (BDD testing framework) from source
-# Build as static libraries with GTest support
 RUN git clone --branch v0.8.0 https://github.com/cucumber/cucumber-cpp.git /tmp/cucumber-cpp && \
     cd /tmp/cucumber-cpp && \
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_SHARED_LIBS=ON \
     -DCUKE_ENABLE_EXAMPLES=OFF \
     -DCUKE_TESTS_VALGRIND=OFF \
-    -DCUKE_ENABLE_GTEST=ON && \
+    -DCUKE_DISABLE_TESTS=ON && \
     cmake --build build -j"$(nproc)" && \
     cmake --install build && \
+    ldconfig && \
     rm -rf /tmp/cucumber-cpp
-
-# Install Ruby and Cucumber for BDD testing
-# Cucumber 9.2.0 + cucumber-wire 8.0.0 (compatible versions)
-# Cucumber 10.x has cucumber-core 16.x which conflicts with cucumber-wire 8.0.0
-RUN apt update && apt install -y --no-install-recommends ruby ruby-dev && \
-    gem install cucumber -v 9.2.0 && \
-    gem install cucumber-wire -v 8.0.0 && \
-    apt clean && rm -rf /var/lib/apt/lists/*
     
 # do not require password for sudo
 RUN  echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
