@@ -25,50 +25,30 @@ tests the compiled binary end-to-end, with no source-level dependency on any lay
 ```mermaid
 graph TB
     subgraph L0["L0 — Acceptance Tests"]
-        direction LR
-        AT1["test_pytest\npytest-bdd"]
-        AT2["test_bdd_cucumber\nC++ Cucumber"]
+        AT1["test_pytest · pytest-bdd"] ~~~ AT2["test_bdd_cucumber · C++ Cucumber"] ~~~ SPC0["comm_terminate · graceful shutdown"]
     end
 
-    subgraph APP["main/ — Application Binary"]
-        direction LR
-        MAIN["main.cpp\nbinary assembly"]
+    subgraph L1["L1 — Presentation (planned)"]
+        L1A["http_server"] ~~~ L1B["rest_api"] ~~~ SPC1["comm_terminate · graceful shutdown"]
     end
 
-    subgraph L1["L1 — Presentation  (planned)"]
-        direction LR
-        L1A["http_server"]
-        L1B["rest_api"]
+    subgraph L2["L2 — Services (planned)"]
+        L2A["user_service"] ~~~ L2B["auth_service"] ~~~ SPC2["comm_terminate · graceful shutdown"]
     end
 
-    subgraph L2["L2 — Services  (planned)"]
-        direction LR
-        L2A["user_service"]
-        L2B["auth_service"]
-    end
-
-    subgraph L3["L3 — Storage  (planned)"]
-        direction LR
-        L3A["user_repository"]
-        L3B["database_conn"]
+    subgraph L3["L3 — Storage (planned)"]
+        L3A["user_repository"] ~~~ L3B["database_conn"] ~~~ SPC3["comm_terminate · graceful shutdown"]
     end
 
     subgraph L4["L4 — Infrastructure"]
-        direction LR
-        IM["infr_main"]
-        L4B["cache_manager\n(example)"]
+        IM["infr_main"] ~~~ L4B["cache_manager"] ~~~ SPC4["comm_terminate · graceful shutdown"]
     end
 
     subgraph L5["L5 — Common"]
-        direction LR
-        CCT["comm_config-toml\nTOML · XDG · SIGHUP"]
-        CM["comm_main\nmain loop · signals"]
-        CT["comm_terminate\ngraceful shutdown"]
+        CCT["comm_config-toml · TOML / XDG / SIGHUP"] ~~~ CM["comm_main · signals / loop"] ~~~ CT["comm_terminate · graceful shutdown"]
     end
 
-    L0 -->|"black-box via binary"| APP
-    APP --> L1
-    APP --> L4
+    L0 -->|"black-box via binary"| L1
     L1 --> L2
     L2 --> L3
     L3 --> L4
@@ -77,25 +57,27 @@ graph TB
     style L0  fill:#d4edda,stroke:#1e7e34,color:#000
     style AT1 fill:#c3e6cb,stroke:#1e7e34,color:#000
     style AT2 fill:#c3e6cb,stroke:#1e7e34,color:#000
-
-    style APP  fill:#f8f9fa,stroke:#495057,color:#000
-    style MAIN fill:#e2e3e5,stroke:#495057,color:#000
+    style SPC0 fill:#d4edda,stroke:#d4edda,color:#d4edda
 
     style L1  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
     style L1A fill:#ffeeba,stroke:#856404,color:#000
     style L1B fill:#ffeeba,stroke:#856404,color:#000
+    style SPC1 fill:#fff3cd,stroke:#fff3cd,color:#fff3cd
 
     style L2  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
     style L2A fill:#ffeeba,stroke:#856404,color:#000
     style L2B fill:#ffeeba,stroke:#856404,color:#000
+    style SPC2 fill:#fff3cd,stroke:#fff3cd,color:#fff3cd
 
     style L3  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
     style L3A fill:#ffeeba,stroke:#856404,color:#000
     style L3B fill:#ffeeba,stroke:#856404,color:#000
+    style SPC3 fill:#fff3cd,stroke:#fff3cd,color:#fff3cd
 
     style L4  fill:#d1ecf1,stroke:#0c5460,color:#000
     style IM  fill:#bee5eb,stroke:#0c5460,color:#000
     style L4B fill:#bee5eb,stroke:#0c5460,color:#000
+    style SPC4 fill:#d1ecf1,stroke:#d1ecf1,color:#d1ecf1
 
     style L5  fill:#cce5ff,stroke:#004085,color:#000
     style CCT fill:#b8daff,stroke:#004085,color:#000
