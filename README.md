@@ -5,401 +5,164 @@
 [![Docker Build](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml/badge.svg)](https://github.com/prze-kiesz/modu-core/actions/workflows/docker-build.yml)
 [![License](https://img.shields.io/badge/License-BSD_2--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
-Universal C++ Application Framework with Layered Modular Architecture
+C++20 application framework skeleton with layered modular architecture.
 
-## Project Overview
+## What it is
 
-**modu-core** is a modern C++20 framework designed for building robust, maintainable, and scalable applications through a strictly layered modular architecture. The project demonstrates best practices in software engineering, including clean architecture, dependency management, comprehensive testing, and professional CI/CD pipelines.
+**modu-core** is a foundation for building C++ applications — command-line tools,
+background services, daemons, or anything in between. It provides a working skeleton:
+signal handling, TOML config with XDG hierarchy, SIGHUP hot-reload, structured
+logging via glog, and a strict layered module system ready to grow into.
 
-## Key Features
+The layer structure is a template, not a constraint. Add, remove, or rename layers
+to match your application domain.
 
-### 🏗️ Layered Architecture
+## Architecture
 
-The framework implements a five-layer architecture where each layer has distinct responsibilities and clear dependencies:
+Layers depend downward only (L1 → L5). `L0` is the acceptance test suite — it
+tests the compiled binary end-to-end, with no source-level dependency on any layer.
 
-- **L1_Presentation** - User interface and presentation logic
-- **L2_Services** - Business logic and application services
-- **L3_Storage** - Data persistence and storage abstractions
-- **L4_Infrastructure** - System-level infrastructure (networking, hardware interfaces)
-- **L5_Common** - Cross-cutting concerns (logging, error handling, lifecycle management)
+```mermaid
+graph TB
+    subgraph L0["L0 — Acceptance Tests"]
+        direction LR
+        AT1["test_pytest\npytest-bdd"]
+        AT2["test_bdd_cucumber\nC++ Cucumber"]
+    end
 
-**Dependency Rule**: Higher layers (L1) can depend on lower layers (L5), but never the reverse. This ensures clean separation of concerns and prevents circular dependencies.
+    subgraph APP["main/ — Application Binary"]
+        direction LR
+        MAIN["main.cpp\nbinary assembly"]
+    end
 
-> **Note**: This five-layer architecture is just an example demonstrating the framework's capabilities. End users can freely adapt the architecture to their specific needs - add, remove, or reorganize layers, rename them, or create entirely different structures. The framework is flexible and supports any layered architecture design.
+    subgraph L1["L1 — Presentation  (planned)"]
+        direction LR
+        L1A["http_server"]
+        L1B["rest_api"]
+    end
 
-### 🧩 Independent Module Development
+    subgraph L2["L2 — Services  (planned)"]
+        direction LR
+        L2A["user_service"]
+        L2B["auth_service"]
+    end
 
-Each module within a layer is:
-- **Self-contained**: Has its own `CMakeLists.txt` for build configuration
-- **Independently testable**: Includes dedicated `unit_test/` directory with comprehensive tests
-- **Discoverable**: Provides `*-config.cmake` for integration via CMake's `find_package()`
-- **Well-documented**: Clear interfaces defined in `interface/` headers, optional `README.md` for module overview, and `doc/` subdirectory for detailed documentation
+    subgraph L3["L3 — Storage  (planned)"]
+        direction LR
+        L3A["user_repository"]
+        L3B["database_conn"]
+    end
 
-This architecture enables:
-- Parallel development by multiple teams
-- Module-level testing and validation
-- Easy addition of new modules without affecting existing code
-- Selective linking - only include what you need
+    subgraph L4["L4 — Infrastructure"]
+        direction LR
+        IM["infr_main"]
+        L4B["cache_manager\n(example)"]
+    end
 
-### ⚙️ Modern C++ Standards
+    subgraph L5["L5 — Common"]
+        direction LR
+        CCT["comm_config-toml\nTOML · XDG · SIGHUP"]
+        CM["comm_main\nmain loop · signals"]
+        CT["comm_terminate\ngraceful shutdown"]
+    end
 
-- **C++20**: Leverages latest language features (concepts, coroutines, ranges)
-- **std::error_code**: Standardized error handling across all modules
-- **RAII & Smart Pointers**: Memory safety without garbage collection
-- **Type Safety**: Strong typing with compile-time checks
+    L0 -->|"black-box via binary"| APP
+    APP --> L1
+    APP --> L4
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+    L4 --> L5
 
-### 🧪 Comprehensive Testing
+    style L0  fill:#d4edda,stroke:#1e7e34,color:#000
+    style AT1 fill:#c3e6cb,stroke:#1e7e34,color:#000
+    style AT2 fill:#c3e6cb,stroke:#1e7e34,color:#000
 
-- **Unit Tests**: Each module has isolated unit tests using Google Test framework
-- **CTest Integration**: Automatic test discovery and execution
-- **Continuous Testing**: All tests run on every commit via CI/CD
-- **Code Coverage**: Track test coverage metrics (planned)
+    style APP  fill:#f8f9fa,stroke:#495057,color:#000
+    style MAIN fill:#e2e3e5,stroke:#495057,color:#000
 
-### 📦 Professional Build System
+    style L1  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
+    style L1A fill:#ffeeba,stroke:#856404,color:#000
+    style L1B fill:#ffeeba,stroke:#856404,color:#000
 
-- **CMake 3.22+**: Modern CMake with target-based dependency management
-- **OBJECT Libraries**: Efficient compilation and linking
-- **Generator Expressions**: Flexible build/install interface separation
-- **Cross-platform**: Linux (Ubuntu 24.04), with potential for Windows/macOS
+    style L2  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
+    style L2A fill:#ffeeba,stroke:#856404,color:#000
+    style L2B fill:#ffeeba,stroke:#856404,color:#000
 
-### 🔄 Error Handling
+    style L3  fill:#fff3cd,stroke:#856404,color:#000,stroke-dasharray:5 5
+    style L3A fill:#ffeeba,stroke:#856404,color:#000
+    style L3B fill:#ffeeba,stroke:#856404,color:#000
 
-- **Custom Error Categories**: Each module defines domain-specific error codes
-- **Type-safe**: Compile-time error code validation
-- **Informative**: Human-readable error messages
-- **Composable**: Errors propagate cleanly through layer boundaries
+    style L4  fill:#d1ecf1,stroke:#0c5460,color:#000
+    style IM  fill:#bee5eb,stroke:#0c5460,color:#000
+    style L4B fill:#bee5eb,stroke:#0c5460,color:#000
 
-### 🚀 System Integration
-
-- **systemd Support**: Native integration with Linux system daemon manager
-- **Signal Handling**: Graceful shutdown on SIGTERM, SIGINT, SIGQUIT
-- **Logging**: Structured logging with Google glog
-- **Lifecycle Management**: Proper initialization and deinitialization order
-
-## Project Structure
-
-```
-modu-core/
-├── CMakeLists.txt              # Root project configuration
-├── main/                       # Application entry point
-│   ├── CMakeLists.txt
-│   └── main.cpp
-├── L1_Presentation/            # Layer 1: UI and presentation
-├── L2_Services/                # Layer 2: Business logic
-├── L3_Storage/                 # Layer 3: Data persistence
-├── L4_Infrastructure/          # Layer 4: System infrastructure
-│   └── infr_main/              # Infrastructure initialization module
-│       ├── CMakeLists.txt
-│       ├── infr_main-config.cmake
-│       ├── interface/
-│       │   └── infr_main.h
-│       └── src/
-│           └── infr_main.cpp
-└── L5_Common/                  # Layer 5: Common utilities
-    ├── comm_main/              # Common layer initialization
-    │   ├── CMakeLists.txt
-    │   ├── comm_main-config.cmake
-    │   ├── interface/
-    │   │   └── comm_main.h
-    │   └── src/
-    │       └── comm_main.cpp
-    └── comm_terminate/         # Signal handling and graceful shutdown
-        ├── CMakeLists.txt
-        ├── comm_terminate-config.cmake
-        ├── interface/
-        │   └── comm_terminate.h
-        ├── src/
-        │   └── comm_terminate.cpp
-        └── unit_test/
-            ├── CMakeLists.txt
-            └── comm_terminate_test.cpp
+    style L5  fill:#cce5ff,stroke:#004085,color:#000
+    style CCT fill:#b8daff,stroke:#004085,color:#000
+    style CM  fill:#b8daff,stroke:#004085,color:#000
+    style CT  fill:#b8daff,stroke:#004085,color:#000
 ```
 
-## Building the Project
+Each module is self-contained: `CMakeLists.txt`, `*-config.cmake`, `interface/`, `src/`, `unit_test/`.  
+See [docs/MODULE_TEMPLATE.md](docs/MODULE_TEMPLATE.md) for a module skeleton.
 
-### Development Container
+## What's implemented
 
-The project includes a pre-configured development container with all dependencies installed. 
+| Module | Description |
+|---|---|
+| `comm_config-toml` | TOML config loader, XDG hierarchy, SIGHUP hot-reload |
+| `comm_main` | Application main loop, signal setup |
+| `comm_terminate` | Graceful shutdown on SIGTERM/SIGINT/SIGQUIT |
+| `infr_main` | Infrastructure-layer init hook |
+| `L0/test_pytest` | Acceptance tests: startup/shutdown, config reload scenarios |
 
-> **📖 For detailed documentation** including version management, tagging strategy, and multi-architecture support, see [.devcontainer/README.md](.devcontainer/README.md)
+Details: [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md)
 
-**Option 1: Prebuilt Docker Image (Recommended)**
-```bash
-# Pull the latest development container image
-docker pull ghcr.io/prze-kiesz/modu-core:latest
+## Documentation
 
-# Or use it directly in VS Code by uncommenting the "image" line in .devcontainer/devcontainer.json
-```
+| Document | Description |
+|---|---|
+| [docs/MODULE_TEMPLATE.md](docs/MODULE_TEMPLATE.md) | How to create a new module (skeleton + CMake patterns) |
+| [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md) | Config hot-reload mechanics, SIGHUP flow |
+| [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md) | Branch protection rules and PR policy |
+| [.devcontainer/README.md](.devcontainer/README.md) | Devcontainer setup, image tagging, multi-arch |
+| [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) | Contribution workflow, commit conventions |
+| [.llm/](`.llm/`) | AI agent guidelines — read before making changes |
 
-**Option 2: Build Locally**
-```bash
-# Build the development container from Dockerfile
-cd .devcontainer
-docker build -t modu-core-dev .
-```
-
-The container includes:
-- Ubuntu 24.04 LTS
-- CMake, Make, GCC, Clang-19
-- Google Test (gtest + gmock) 1.16.0
-- Google glog 0.6.0
-- systemd development libraries
-- Cross-compilation tools (ARM64)
-- Development tools (ccache, clang-tidy, clang-format, clangd)
-
-### Prerequisites
+## Quick start
 
 ```bash
-# Ubuntu 24.04
-sudo apt-get update
-sudo apt-get install -y \
-    build-essential \
-    cmake \
-    libgtest-dev \
-    libgmock-dev \
-    libgoogle-glog-dev \
-    libsystemd-dev \
-    pkg-config
+# Build (use devcontainer or install deps manually — see .devcontainer/README.md)
+cmake -S . -B build-test -DBUILD_TESTS=ON
+cmake --build build-test -j$(nproc)
+
+# Unit tests
+ctest --test-dir build-test --output-on-failure
+
+# Acceptance tests
+MODU_CORE_BINARY=./build-test/main/modu-core \
+  pytest L0_AcceptanceTests/test_pytest/ -v
 ```
 
-### Build Instructions
+The recommended dev environment is the prebuilt devcontainer (`ghcr.io/prze-kiesz/modu-core:latest`).  
+See [.devcontainer/README.md](.devcontainer/README.md) for details.
 
-```bash
-# Create build directory
-mkdir -p build
-cd build
+## CI/CD
 
-# Configure with CMake
-cmake ..
+GitHub Actions runs on every push and PR:
 
-# Build
-make -j$(nproc)
-
-# Run application
-./main/modu-core
-
-# Run tests
-ctest --output-on-failure
-```
-
-### Build Options
-
-- `BUILD_TESTING=ON` - Enable unit tests (default: ON)
-- `CMAKE_BUILD_TYPE=Release|Debug` - Build configuration
-
-## Running Tests
-
-```bash
-# Run all tests
-cd build
-ctest --output-on-failure
-
-# Run specific test
-./main/comm_terminate/unit_test/modu-core-comm_terminate_unittest
-
-# Verbose test output
-ctest -V
-```
-
-## CI/CD Integration
-
-The project uses **GitHub Actions** for continuous integration and deployment:
-
-### Automated Workflows
-
-- ✅ **Build and Test**: Compile and test on every push and pull request
-  - Builds: Debug and Release configurations with GCC
-  - Runs all unit tests with CTest
-  - Test results uploaded as artifacts
-  - Uses prebuilt Docker container for fast builds
-- ✅ **Static Analysis**: Automated code quality checks
-  - **clang-tidy**: Modern C++ linting and best practices
-  - **cppcheck**: Static analysis for bugs and undefined behavior
-  - **clang-format**: Code formatting verification
-  - Reports uploaded as artifacts for review
-- ✅ **Docker Image Build**: Automatically build and publish development container to GitHub Container Registry
-  - Triggered on changes to `.devcontainer/Dockerfile`
-  - Tagged with `latest`, branch name, PR number, and git SHA
-  - Published to `ghcr.io/prze-kiesz/modu-core`
-  - Semantic versioning on releases
-- 🔄 **Code Quality**: Static analysis and linting (planned)
-- 🔄 **Coverage Reports**: Track test coverage trends (planned)
-- 📦 **Package Creation**: Build `.deb` and `.rpm` packages (planned)
-- 🚀 **Release Automation**: Automatic versioning and release creation (planned)
-
-### Using the Prebuilt Development Container
-
-```bash
-# Pull the latest image
-docker pull ghcr.io/prze-kiesz/modu-core:latest
-
-# Run with VS Code Remote Containers extension
-# Or update .devcontainer/devcontainer.json to use prebuilt image
-```
-
-See `.github/workflows/` for workflow definitions.
-
-## Versioning
-
-The project follows [Semantic Versioning 2.0.0](https://semver.org/):
-
-- **MAJOR**: Incompatible API changes
-- **MINOR**: Backward-compatible functionality additions
-- **PATCH**: Backward-compatible bug fixes
-
-Current version: `1.0.0` (defined in root `CMakeLists.txt`)
-
-Version information is embedded in:
-- CMake project configuration
-- Package metadata (deb/rpm)
-- Application runtime information
-
-## Installation
-
-### From Source
-
-```bash
-cd build
-sudo make install
-```
-
-Default installation paths:
-- Binaries: `/usr/local/bin/`
-- Libraries: `/usr/local/lib/`
-- Headers: `/usr/local/include/`
-
-### Package Installation (Planned)
-
-```bash
-# Debian/Ubuntu
-sudo dpkg -i modu-core_1.0.0_amd64.deb
-sudo apt-get install -f
-
-# RedHat/CentOS/Fedora
-sudo rpm -i modu-core-1.0.0.x86_64.rpm
-sudo yum install modu-core
-```
-
-## Packaging
-
-### CPack Integration (Planned)
-
-The project uses CPack for creating distribution packages:
-
-```bash
-cd build
-cpack -G DEB    # Create Debian package
-cpack -G RPM    # Create RPM package
-```
-
-Package features:
-- Automatic dependency detection
-- systemd service unit installation
-- Configuration file management
-- Clean uninstallation
-
-## Development Workflow
-
-### Adding a New Module
-
-1. **Create module structure**:
-   ```bash
-   mkdir -p L5_Common/my_module/{interface,src,unit_test}
-   ```
-
-2. **Create CMakeLists.txt**: Define module build configuration
-
-3. **Create *-config.cmake**: Define integration interface
-
-4. **Implement module**: Add headers in `interface/`, sources in `src/`
-
-5. **Add unit tests**: Create tests in `unit_test/`
-
-6. **Register module**: Add to appropriate layer in root CMakeLists.txt
-
-### Testing a Module
-
-```bash
-# Build and test specific module
-cd build
-make modu-core-my_module_unittest
-./path/to/modu-core-my_module_unittest
-```
+- **Build and Test** — Debug + Release matrix, CTest unit tests + pytest-bdd acceptance tests
+- **Static Analysis** — clang-tidy, cppcheck, clang-format
+- **Docker Build** — publishes devcontainer image to `ghcr.io/prze-kiesz/modu-core`
 
 ## Contributing
 
-Contributions are welcome! All changes must be submitted through pull requests.
+All changes via pull requests. PRs require passing CI and at least one approval.  
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md) for branch conventions and guidelines.
 
-**Quick Start:**
-
-1. **Fork the repository** and create a feature branch
-2. **Make your changes** following the architecture guidelines
-3. **Run tests and static analysis** locally
-4. **Submit a pull request** using the provided template
-5. **Address review feedback** and wait for approval
-
-**Development Workflow:**
-
-- All changes go through pull requests (no direct commits to `main`)
-- PRs require passing CI/CD checks (builds, tests, static analysis)
-- At least one approval required before merging
-- Squash merging enforced for clean history
-
-**Guidelines:**
-
-1. **Follow the architecture**: Respect layer dependencies (higher → lower only)
-2. **Write tests**: All new code must have unit tests with good coverage
-3. **Document interfaces**: Clear comments in header files
-4. **Use modern C++**: Leverage C++20 features appropriately
-5. **Error handling**: Use std::error_code for recoverable errors
-6. **Code style**: Follow existing conventions (clang-format enforced)
-
-For detailed contribution guidelines, see [CONTRIBUTING.md](.github/CONTRIBUTING.md).
+For AI agents working in this codebase: read `.llm/` first.
 
 ## License
 
-This project is licensed under the **BSD 2-Clause License**.
-
-See [LICENSE](LICENSE) file for details.
-
-## Authors
-
-- Przemek Kieszkowski - Initial work and architecture
-
-## Roadmap
-
-### Current Status (v1.0.0)
-- ✅ Layered architecture framework
-- ✅ CMake build system
-- ✅ Basic modules (comm_main, comm_terminate, infr_main)
-- ✅ Unit testing infrastructure
-- ✅ systemd integration
-- ✅ CI/CD with automated builds and testing
-- ✅ Static code analysis (clang-tidy, cppcheck, clang-format)
-- ✅ Docker development container
-
-### Planned Features
-- ✅ **Docker development container with automated builds**
-- ✅ **CI/CD pipeline with build and test automation**
-- 🔄 **Static code analysis (clang-tidy, cppcheck, clang-format)**
-- 📋 Code coverage reporting
-- 📋 Automated package generation (deb/rpm)
-- 📋 Documentation generation (Doxygen)
-- ✅ **Docker container support**
-- 📋 Performance benchmarking
-- 📋 Example applications
-- 📋 Storage layer implementation (L3)
-- 📋 Service layer implementation (L2)
-- 📋 Presentation layer implementation (L1)
-
-## Support
-
-For issues, questions, or contributions:
-- **Issues**: https://github.com/prze-kiesz/modu-core/issues
-- **Discussions**: https://github.com/prze-kiesz/modu-core/discussions
-- **Contributing Guide**: [CONTRIBUTING.md](.github/CONTRIBUTING.md)
-- **Pull Request Template**: Automatically loaded when creating PRs
-
----
-
-**Main concepts based on software experience - developed with AI assistance**
+BSD 2-Clause — see [LICENSE](LICENSE).  
+Copyright (c) 2026 Przemek Kieszkowski
