@@ -3,8 +3,11 @@
 
 cmake_minimum_required(VERSION 3.22)
 
+# Read version from VERSION file (single source of truth for CI and Yocto)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" MODU_CORE_VERSION)
+string(STRIP "${MODU_CORE_VERSION}" MODU_CORE_VERSION)
 
-project("modu-core" VERSION 1.0 LANGUAGES CXX)
+project("modu-core" VERSION ${MODU_CORE_VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 
@@ -61,3 +64,15 @@ add_subdirectory(main)
 target_link_libraries(${CMAKE_PROJECT_NAME}
 		${MODU_CORE_COMMON_LIBS}
 )
+
+# ####################
+# CPack — Debian package
+set(CPACK_PACKAGE_NAME "modu-core")
+set(CPACK_PACKAGE_VERSION "${MODU_CORE_VERSION}")
+set(CPACK_PACKAGE_CONTACT "Przemek Kieszkowski")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++20 application framework skeleton")
+set(CPACK_GENERATOR "DEB")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgoogle-glog0v6 | libgoogle-glog0t64, libsystemd0")
+set(CPACK_STRIP_FILES TRUE)
+include(CPack)
