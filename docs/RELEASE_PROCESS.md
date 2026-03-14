@@ -2,6 +2,74 @@
 
 This document describes the versioning scheme and release lifecycle for modu-core.
 
+---
+
+## GitHub Actions — overview
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **build-and-test.yml** | Push / PR to `main`, `develop`; Docker image rebuilt | Builds Debug + Release, runs unit tests (ctest) and acceptance tests (pytest). Gate for every merge. |
+| **static-analysis.yml** | Push / PR touching C++ or CMake files | Runs clang-tidy, cppcheck and clang-format checks. Reports uploaded as artifacts. |
+| **docker-build.yml** | Changes to `.devcontainer/`; manual | Builds and pushes the devcontainer image to GHCR. Tags with `docker_vX.Y.Z`. |
+| **dev-tag.yml** | Every push to `main` (auto) | Creates a lightweight `modu-core-vX.Y.Z-dev.N` tag for traceability of every merge. |
+| **release.yml** | Manual (`workflow_dispatch`) | Unified release workflow — MINOR bump from `main`, PATCH bump from `release/vX.Y.x`. Builds, packages `.deb`, pushes annotated tag, publishes GitHub Release. |
+| **create-release-branch.yml** | Manual (`workflow_dispatch`) | Creates a `release/vX.Y.x` branch from an existing release tag for hotfix work. |
+
+---
+
+## Branching model
+
+```
+        main                          
+          │
+          ● merge PR
+          │ ← dev.1
+          │
+          ● merge PR
+          │ ← dev.2
+          │
+          ● merge PR
+          │ ← dev.3
+          │
+          ● Release (MINOR updated)
+          │ ← v1.1.0
+          │
+          ● merge PR
+          │ ← dev.4
+          │
+          ● merge PR
+          │ ← dev.5
+          │
+          ● Release (MINOR updated)
+          │ ← v1.2.0 --create-release-branch--> release/v1.2.x
+          │                                          │
+          │                                          │
+          │                                          ● hotfix PR
+          │                                          │
+          │                                          ● Release (PATCH)
+          │                                          │ ← v1.2.1
+          │                                          │
+          │                                          ● hotfix PR
+          │                                          │
+          │                                          ● Release (PATCH)
+          │                                          │ ← v1.2.2
+          │                                          │
+          ● merge PR                                 ▼
+          │ ← dev.6
+          │
+          ▼
+```
+
+**Key rules:**
+
+- **`main`** — all feature development lands here via PRs. Every merge gets a `dev.N` tag automatically.
+- **Feature release** — run Release workflow on `main` → creates `vX.(Y+1).0` tag + GitHub Release.
+- **`release/vX.Y.x`** — created from a release tag when hotfixes are needed. Protected like `main` (PR required).
+- **Hotfix** — commit fix to `release/vX.Y.x` via PR, then run Release workflow → creates `vX.Y.(Z+1)` tag.
+- Tags are **never** created manually — always through GitHub Actions.
+
+---
+
 ## Version scheme
 
 ```
@@ -35,20 +103,6 @@ MAJOR=1
 | `modu-core-vX.Y.Z` | Release tag (GitHub Release + .deb) |
 | `modu-core-vX.Y.Z-dev.N` | Development snapshot (no GitHub Release) |
 | `docker_vX.Y.Z` | Devcontainer image (separate from app versioning) |
-
----
-
-## Workflow map
-
-```
-.github/workflows/
-├── dev-tag.yml               — auto dev tag on every push to main
-├── release.yml               — unified release (MINOR or PATCH)
-├── create-release-branch.yml — create release/vX.Y.x from a tag
-├── build-and-test.yml        — CI for PRs and pushes
-├── static-analysis.yml       — clang-tidy on PRs
-└── docker-build.yml          — devcontainer image build
-```
 
 ---
 
