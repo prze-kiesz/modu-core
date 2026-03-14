@@ -119,6 +119,14 @@ Details: [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md)
 cmake -S . -B build-test -DBUILD_TESTS=ON
 cmake --build build-test -j$(nproc)
 
+# Run the application
+mkdir -p ~/.config/modu-core
+cat > ~/.config/modu-core/config.toml << 'EOF'
+[app]
+log_level = "info"
+EOF
+./build-test/main/modu-core
+
 # Unit tests
 ctest --test-dir build-test --output-on-failure
 
@@ -126,6 +134,10 @@ ctest --test-dir build-test --output-on-failure
 MODU_CORE_BINARY=./build-test/main/modu-core \
   pytest L0_AcceptanceTests/test_pytest/ -v
 ```
+
+The application looks for `config.toml` in `$XDG_CONFIG_HOME/modu-core/` (default `~/.config/modu-core/`).  
+Send `SIGTERM` or `Ctrl+C` to shut down gracefully. `SIGHUP` reloads config without restart.  
+See [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md) for details.
 
 The recommended dev environment is the prebuilt devcontainer (`ghcr.io/prze-kiesz/modu-core:latest`).  
 See [.devcontainer/README.md](.devcontainer/README.md) for details.
