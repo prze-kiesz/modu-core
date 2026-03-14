@@ -12,7 +12,7 @@ This document describes the versioning scheme and release lifecycle for modu-cor
 | **static-analysis.yml** | Push / PR touching C++ or CMake files | Runs clang-tidy, cppcheck and clang-format checks. Reports uploaded as artifacts. |
 | **docker-build.yml** | Changes to `.devcontainer/`; manual | Builds and pushes the devcontainer image to GHCR. Tags with `docker_vX.Y.Z`. |
 | **dev-tag.yml** | Every push to `main` (auto) | Creates a lightweight `modu-core-vX.Y.Z-dev.N` tag for traceability of every merge. |
-| **release.yml** | Manual (`workflow_dispatch`) | Unified release workflow — MINOR bump from `main`, PATCH bump from `release/vX.Y.x`. Builds, packages `.deb`, pushes annotated tag, publishes GitHub Release. |
+| **release.yml** | Manual — select branch in *"Use workflow from"* | Unified release workflow — MINOR bump from `main`, PATCH bump from `release/vX.Y.x`. Builds, packages `.deb`, pushes annotated tag, publishes GitHub Release. |
 | **create-release-branch.yml** | Manual (`workflow_dispatch`) | Creates a `release/vX.Y.x` branch from an existing release tag for hotfix work. |
 
 ---
@@ -126,7 +126,7 @@ No action required. Provides full traceability of every `main` commit.
 
 ### 2. Feature release — MINOR bump
 
-Run **Actions → Release** with `branch = main`:
+Run **Actions → Release**, selecting `main` in *"Use workflow from"*:
 
 ```
 Actions → Release (branch=main)
@@ -152,7 +152,7 @@ Actions → Create Release Branch (release_tag=modu-core-v1.2.0)
 
 **Step 2:** Apply the fix on `release/v1.2.x` (via PR or direct commit).
 
-**Step 3:** Run **Actions → Release** with `branch = release/v1.2.x`:
+**Step 3:** Run **Actions → Release**, selecting `release/v1.2.x` in *"Use workflow from"*:
 
 ```
 Actions → Release (branch=release/v1.2.x)
@@ -162,9 +162,6 @@ Actions → Release (branch=release/v1.2.x)
   ├── pushes annotated tag: modu-core-v1.2.1
   └── GitHub Release with changelog
 ```
-
-To always target the latest release branch without looking it up manually,
-use `branch = latest-release-branch`.
 
 ---
 
@@ -181,16 +178,20 @@ Commit and merge to `main`. The next release from `main` will produce `modu-core
 
 ---
 
-## Release workflow inputs
+## Release workflow
 
 **Actions → Release** (`release.yml`):
 
-| Input | Values | Effect |
-|-------|--------|--------|
-| `branch` | `main` | MINOR bump from main |
-| `branch` | `latest-release-branch` | PATCH bump, auto-detects latest `release/vX.Y.x` |
-| `branch` | `release/vX.Y.x` | PATCH bump from specific branch |
-| `dry_run` | `true` | Computes and logs tag, does not push or publish |
+1. In the GitHub Actions UI, click **"Run workflow"**
+2. In *"Use workflow from"*, select the branch:
+   - `main` → MINOR bump (feature release)
+   - `release/vX.Y.x` → PATCH bump (hotfix release)
+3. Optionally check *"Dry run"* to compute the tag without publishing
+
+| Branch selected | Effect |
+|-----------------|--------|
+| `main` | MINOR bump from main |
+| `release/vX.Y.x` | PATCH bump from specific release branch |
 
 ---
 
