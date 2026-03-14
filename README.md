@@ -106,6 +106,7 @@ Details: [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md)
 |---|---|
 | [docs/MODULE_TEMPLATE.md](docs/MODULE_TEMPLATE.md) | How to create a new module (skeleton + CMake patterns) |
 | [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md) | Config hot-reload mechanics, SIGHUP flow |
+| [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) | Versioning scheme, release lifecycle, hotfix flow |
 | [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md) | Branch protection rules and PR policy |
 | [.devcontainer/README.md](.devcontainer/README.md) | Devcontainer setup, image tagging, multi-arch |
 | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) | Contribution workflow, commit conventions |
@@ -136,6 +137,11 @@ GitHub Actions runs on every push and PR:
 - **Build and Test** — Debug + Release matrix, CTest unit tests + pytest-bdd acceptance tests
 - **Static Analysis** — clang-tidy, cppcheck, clang-format
 - **Docker Build** — publishes devcontainer image to `ghcr.io/prze-kiesz/modu-core`
+- **Dev Tag** — auto-tags `modu-core-vX.Y.Z-dev.N` on every merge to `main`
+- **Release** — manual workflow: MINOR bump from `main`, PATCH bump from `release/vX.Y.x`; produces binary + `.deb`
+- **Create Release Branch** — manual workflow: creates `release/vX.Y.x` from a release tag for hotfixes
+
+See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for the full versioning and release lifecycle.
 
 ## Contributing
 
