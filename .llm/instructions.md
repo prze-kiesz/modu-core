@@ -26,8 +26,45 @@ SPDX-License-Identifier: BSD-2-Clause
 - Add comments for unusual solutions
 
 ## Testing
+
+### General Rules
 - Test changes before committing
 - Report errors with context
+- Prefer fixing root causes over suppressing test output
+
+### Unit Tests (GoogleTest)
+- Located in `<module>/unit_test/` within each layer module
+- Must provide custom `main()` that calls `google::InitGoogleLogging(argv[0])`
+  and `google::ShutdownGoogleLogging()` — do NOT use `GTest::gtest_main`
+- Add `target_link_libraries(... GTest::gtest)` instead of `GTest::gtest_main`
+- Use `LOG(WARNING)` (not `LOG(ERROR)`) for handled errors that are propagated
+  via `std::error_code` return values — callers decide severity
+- Test naming: `test_noun_WhenCondition_ExpectResult`
+
+### Acceptance Tests (pytest-bdd)
+- Located in `L0_AcceptanceTests/test_pytest/`
+- Written as BDD scenarios: `.feature` files + Python step definitions
+- Require the built binary via env var `MODU_CORE_BINARY=./build/main/modu-core`
+- Run with: `pytest L0_AcceptanceTests/test_pytest/ -v`
+- Use `LogWatcher` (in `helpers/log_watcher.py`) to scan stdout/stderr of the app
+- Use `log_watcher.mark()` before triggering an event, then `wait_for(..., from_mark=mark)`
+  to assert that a log line appeared AFTER the event (prevents false positives)
+- Add `_log.info()` calls in step definitions for pytest live log visibility
+- Feature file areas: `application_lifecycle/`, `configuration/`
+- Shared step definitions live in `conftest.py`
+
+### Running Tests
+```bash
+# Unit tests:
+ctest --test-dir build-test --output-on-failure
+
+# Acceptance tests:
+MODU_CORE_BINARY=./build-test/main/modu-core \
+  pytest L0_AcceptanceTests/test_pytest/ -v
+
+# Single acceptance test:
+pytest L0_AcceptanceTests/test_pytest/configuration/ -v -k "reload"
+```
 
 ## Helpful Links
 - Project documentation: see README.md

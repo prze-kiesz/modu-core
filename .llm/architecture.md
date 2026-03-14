@@ -19,6 +19,7 @@ modu-core is a comprehensive framework designed as a foundation for building fut
 
 modu-core is built on a **layered and modular structure** consisting of:
 
+0. **L0_AcceptanceTests** - Black-box BDD acceptance tests (pytest-bdd), test the running binary
 1. **L1_Presentation** - User interfaces and API endpoints
 2. **L2_Services** - Core application logic and business services
 3. **L3_Storage** - Database interactions and data persistence
@@ -42,6 +43,14 @@ The complete modu-core project follows this directory layout:
 
 ```
 modu-core/
+├── L0_AcceptanceTests/          # Layer 0: Black-box BDD acceptance tests
+│   └── test_pytest/             # pytest-bdd test suite
+│       ├── pytest.ini           # log_cli=true, timeout config
+│       ├── conftest.py          # shared step definitions + fixtures
+│       ├── helpers/             # LogWatcher and shared utilities
+│       ├── application_lifecycle/  # Startup/shutdown scenarios
+│       └── configuration/       # Config load/reload scenarios
+│
 ├── L1_Presentation/             # Layer 1: User interfaces, APIs
 │   ├── http_server/             # Module example
 │   │   ├── interface/
@@ -139,7 +148,9 @@ L5_Common (Bottom - no dependencies)
 ### Layer Dependencies
 
 ```
-L1_Presentation (Top)
+L0_AcceptanceTests (black-box tests — depends on compiled binary only)
+     ↑ tests the binary assembled by
+L1_Presentation (Top — highest app layer)
      ↓ includes from
 L2_Services
      ↓ includes from
