@@ -1,15 +1,24 @@
 name: Release
 
-# User-triggered release workflow.
-# Auto-increments MINOR from the VERSION file, creates a release tag
-# modu-core-v<MAJOR>.<MINOR+1>.0, builds the binary and .deb package,
-# and publishes a GitHub Release with artifacts and auto-generated changelog.
+# Unified release workflow — creates a new release from any branch.
+#
+# branch = "main"                   → MINOR bump → modu-core-vX.(Y+1).0
+# branch = "latest-release-branch"  → PATCH bump → modu-core-vX.Y.(Z+1)  (auto-detects latest release/vX.Y.x)
+# branch = "release/vX.Y.x"         → PATCH bump → modu-core-vX.Y.(Z+1)  (specific release branch)
+#
+# Typical flows:
+#   Feature release:  run on "main"             → modu-core-v1.2.0
+#   Hotfix release:   run on "release/v1.2.x"   → modu-core-v1.2.1
 
 on:
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Branch to release from: "main" (MINOR bump), "latest-release-branch" (PATCH, auto-detect), or "release/vX.Y.x" (PATCH bump)'
+        required: true
+        default: 'main'
       dry_run:
-        description: 'Dry run — compute tag but do not publish'
+        description: 'Dry run: compute tag but do not push or publish'
         type: boolean
         default: false
 
@@ -29,30 +38,74 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0   # full history + all tags
+
+      - name: Resolve and checkout branch
+        id: branch
+        run: |
+          set -euo pipefail
+          INPUT="${{ inputs.branch }}"
+
+          if [[ "$INPUT" == "main" ]]; then
+            BRANCH="main"
+          elif [[ "$INPUT" == "latest-release-branch" ]]; then
+            BRANCH=$(git branch -r --list 'origin/release/v*' \
+              | sed 's|.*origin/||' \
+              | grep -E '^release/v[0-9]+\.[0-9]+\.x$' \
+              | sort -t. -k1,1n -k2,2n | tail -1)
+            if [[ -z "$BRANCH" ]]; then
+              echo "::error::No release/vX.Y.x branches found on remote"
+              exit 1
+            fi
+          elif [[ "$INPUT" =~ ^release/v[0-9]+\.[0-9]+\.x$ ]]; then
+            BRANCH="$INPUT"
+          else
+            echo "::error::Invalid branch: '${INPUT}'. Use 'main', 'latest-release-branch', or 'release/vX.Y.x'"
+            exit 1
+          fi
+
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "### Building from branch: \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Compute release tag
         id: version
         run: |
           set -euo pipefail
-
-          BASE_VERSION=$(cat VERSION | tr -d '[:space:]')
-          MAJOR=$(echo "$BASE_VERSION" | cut -d. -f1)
-          PATCH=$(echo "$BASE_VERSION" | cut -d. -f3)
+          BRANCH="${{ steps.branch.outputs.branch }}"
           PREFIX="modu-core-v"
 
-          # Find the highest MINOR already released for this MAJOR (with PATCH=0)
-          HIGHEST_MINOR=$(git tag -l "${PREFIX}${MAJOR}.*.${PATCH}" \
-            | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
-            | awk -F. '{print $2}' | sort -n | tail -1)
+          if [[ "$BRANCH" == "main" ]]; then
+            # MINOR bump: vMAJOR.(MINOR+1).0
+            MAJOR=$(cat VERSION | tr -d '[:space:]' | cut -d. -f1)
 
-          NEXT_MINOR=$(( ${HIGHEST_MINOR:-0} + 1 ))
-          TAG="${PREFIX}${MAJOR}.${NEXT_MINOR}.${PATCH}"
-          PREV_TAG="${PREFIX}${MAJOR}.${HIGHEST_MINOR:-0}.${PATCH}"
+            HIGHEST_MINOR=$(git tag -l "${PREFIX}${MAJOR}.*.0" \
+              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | awk -F'[v.]' '{print $(NF-1)}' | sort -n | tail -1)
 
-          echo "tag=${TAG}"                >> "$GITHUB_OUTPUT"
-          echo "version=${MAJOR}.${NEXT_MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
-          echo "prev_tag=${PREV_TAG}"      >> "$GITHUB_OUTPUT"
+            NEXT_MINOR=$(( ${HIGHEST_MINOR:-0} + 1 ))
+            TAG="${PREFIX}${MAJOR}.${NEXT_MINOR}.0"
+            VERSION="${MAJOR}.${NEXT_MINOR}.0"
+            PREV_TAG="${PREFIX}${MAJOR}.${HIGHEST_MINOR:-0}.0"
+          else
+            # PATCH bump: vMAJOR.MINOR.(PATCH+1)
+            VERSION_PART="${BRANCH#release/v}"   # e.g. "1.2.x"
+            MAJOR=$(echo "$VERSION_PART" | cut -d. -f1)
+            MINOR=$(echo "$VERSION_PART" | cut -d. -f2)
+
+            HIGHEST_PATCH=$(git tag -l "${PREFIX}${MAJOR}.${MINOR}.*" \
+              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | awk -F. '{print $NF}' | sort -n | tail -1)
+
+            NEXT_PATCH=$(( ${HIGHEST_PATCH:-0} + 1 ))
+            TAG="${PREFIX}${MAJOR}.${MINOR}.${NEXT_PATCH}"
+            VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+            PREV_TAG="${PREFIX}${MAJOR}.${MINOR}.$((NEXT_PATCH - 1))"
+          fi
+
+          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"   >> "$GITHUB_OUTPUT"
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
           echo "### Release tag: \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build
@@ -86,7 +139,6 @@ jobs:
           PREV_TAG="${{ steps.version.outputs.prev_tag }}"
           DEB=$(ls build-release/*.deb)
 
-          # If previous release tag exists, use it as the start of changelog
           NOTES_ARGS=""
           if git rev-parse "${PREV_TAG}" >/dev/null 2>&1; then
             NOTES_ARGS="--notes-start-tag ${PREV_TAG}"
