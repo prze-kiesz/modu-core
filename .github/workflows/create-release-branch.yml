@@ -8,9 +8,6 @@ name: Create Release Branch
 #   Tag:    modu-core-v1.2.0
 #   Branch: release/v1.2.x  →  then Release workflow on "release/v1.2.x" → modu-core-v1.2.1
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 on:
   workflow_dispatch:
     inputs:
@@ -48,7 +45,7 @@ jobs:
           else
             # Resolve latest release tag (no -dev, no -rc suffix)
             TAG=$(git tag -l "${PREFIX}*" \
-              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | { grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" || true; } \
               | sort -V | tail -1)
           fi
 
