@@ -48,9 +48,11 @@ jobs:
 
           NEXT_MINOR=$(( ${HIGHEST_MINOR:-0} + 1 ))
           TAG="${PREFIX}${MAJOR}.${NEXT_MINOR}.${PATCH}"
+          PREV_TAG="${PREFIX}${MAJOR}.${HIGHEST_MINOR:-0}.${PATCH}"
 
-          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"                >> "$GITHUB_OUTPUT"
           echo "version=${MAJOR}.${NEXT_MINOR}.${PATCH}" >> "$GITHUB_OUTPUT"
+          echo "prev_tag=${PREV_TAG}"      >> "$GITHUB_OUTPUT"
           echo "### Release tag: \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build
@@ -81,10 +83,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          PREV_TAG="${{ steps.version.outputs.prev_tag }}"
           DEB=$(ls build-release/*.deb)
+
+          # If previous release tag exists, use it as the start of changelog
+          NOTES_ARGS=""
+          if git rev-parse "${PREV_TAG}" >/dev/null 2>&1; then
+            NOTES_ARGS="--notes-start-tag ${PREV_TAG}"
+          fi
 
           gh release create "${TAG}" \
             --title "${TAG}" \
             --generate-notes \
+            ${NOTES_ARGS} \
             "build-release/main/modu-core#modu-core-binary" \
             "${DEB}#Debian package"

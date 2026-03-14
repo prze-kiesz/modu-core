@@ -1,0 +1,76 @@
+name: Create Release Branch
+
+# Creates a release/vX.Y.x branch from an existing release tag.
+# Run this after publishing a release when you want to be able to hotfix it.
+#
+# Example:
+#   Tag:    modu-core-v1.2.0
+#   Branch: release/v1.2.x
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to branch from (e.g. modu-core-v1.2.0). Leave empty to use latest release.'
+        required: false
+        default: ''
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag and create branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          PREFIX="modu-core-v"
+
+          if [ -n "${{ inputs.release_tag }}" ]; then
+            TAG="${{ inputs.release_tag }}"
+          else
+            # Resolve latest release tag (no -dev, no -rc suffix)
+            TAG=$(git tag -l "${PREFIX}*" \
+              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | sort -V | tail -1)
+          fi
+
+          if [ -z "$TAG" ]; then
+            echo "::error::No release tag found. Publish a release first."
+            exit 1
+          fi
+
+          # Validate the tag exists
+          if ! git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "::error::Tag '${TAG}' does not exist."
+            exit 1
+          fi
+
+          # Extract MAJOR.MINOR from tag (e.g. modu-core-v1.2.0 → 1.2)
+          VERSION_PART="${TAG#${PREFIX}}"      # 1.2.0
+          MAJOR=$(echo "$VERSION_PART" | cut -d. -f1)
+          MINOR=$(echo "$VERSION_PART" | cut -d. -f2)
+          BRANCH="release/v${MAJOR}.${MINOR}.x"
+
+          if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null 2>&1; then
+            echo "::error::Branch '${BRANCH}' already exists."
+            exit 1
+          fi
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${BRANCH}" "${TAG}"
+          git push origin "${BRANCH}"
+
+          echo "### ✅ Branch created" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tag:    \`${TAG}\`"  >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
