@@ -45,6 +45,7 @@ jobs:
 
       - name: Resolve and checkout branch
         id: branch
+        shell: bash
         run: |
           set -euo pipefail
           INPUT="${{ inputs.branch }}"
@@ -73,6 +74,7 @@ jobs:
 
       - name: Compute release tag
         id: version
+        shell: bash
         run: |
           set -euo pipefail
           BRANCH="${{ steps.branch.outputs.branch }}"
@@ -112,20 +114,22 @@ jobs:
           echo "### Release tag: \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build
-        run: |
-          cmake -S . -B build-release \
+        shell: bash
+        run: | \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTING=OFF \
             -DMODU_CORE_VERSION="${{ steps.version.outputs.tag }}"
           cmake --build build-release -j$(nproc)
 
       - name: Package (.deb)
+        shell: bash
         run: |
           cd build-release
           cpack --config CPackConfig.cmake
 
       - name: Create and push tag
         if: ${{ !inputs.dry_run }}
+        shell: bash
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -137,6 +141,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           PREV_TAG="${{ steps.version.outputs.prev_tag }}"

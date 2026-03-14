@@ -32,6 +32,7 @@ jobs:
       - name: Compute and push dev tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
           set -euo pipefail
 
