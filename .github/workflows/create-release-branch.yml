@@ -2,11 +2,11 @@ name: Create Release Branch
 
 # Creates a release/vX.Y.x branch from an existing release tag.
 # Run this after publishing a release when you want to apply hotfixes to it.
-# Then use the Release workflow with branch = "release/vX.Y.x" to publish a hotfix.
+# Then use the Release workflow, selecting "release/vX.Y.x" in "Use workflow from".
 #
 # Example:
 #   Tag:    modu-core-v1.2.0
-#   Branch: release/v1.2.x  →  then Release workflow on "release/v1.2.x" → modu-core-v1.2.1
+#   Branch: release/v1.2.x  →  then Release from "release/v1.2.x" → modu-core-v1.2.1
 
 on:
   workflow_dispatch:

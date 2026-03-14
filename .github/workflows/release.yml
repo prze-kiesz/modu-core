@@ -1,22 +1,18 @@
 name: Release
 
-# Unified release workflow — creates a new release from any branch.
+# Unified release workflow — creates a new release from the selected branch.
 #
-# branch = "main"                   → MINOR bump → modu-core-vX.(Y+1).0
-# branch = "latest-release-branch"  → PATCH bump → modu-core-vX.Y.(Z+1)  (auto-detects latest release/vX.Y.x)
-# branch = "release/vX.Y.x"         → PATCH bump → modu-core-vX.Y.(Z+1)  (specific release branch)
+# Use the "Use workflow from" branch selector in the GitHub Actions UI:
+#   main             → MINOR bump → modu-core-vX.(Y+1).0
+#   release/vX.Y.x   → PATCH bump → modu-core-vX.Y.(Z+1)
 #
 # Typical flows:
-#   Feature release:  run on "main"             → modu-core-v1.2.0
-#   Hotfix release:   run on "release/v1.2.x"   → modu-core-v1.2.1
+#   Feature release:  select "main"             → modu-core-v1.2.0
+#   Hotfix release:   select "release/v1.2.x"   → modu-core-v1.2.1
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to release from: "main" (MINOR bump), "latest-release-branch" (PATCH, auto-detect), or "release/vX.Y.x" (PATCH bump)'
-        required: true
-        default: 'main'
       dry_run:
         description: 'Dry run: compute tag but do not push or publish'
         type: boolean
@@ -43,32 +39,22 @@ jobs:
       - name: Mark repo as safe for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Resolve and checkout branch
+      - name: Validate branch
         id: branch
         shell: bash
         run: |
           set -euo pipefail
-          INPUT="${{ inputs.branch }}"
+          BRANCH="${{ github.ref_name }}"
 
-          if [[ "$INPUT" == "main" ]]; then
-            BRANCH="main"
-          elif [[ "$INPUT" == "latest-release-branch" ]]; then
-            BRANCH=$(git branch -r --list 'origin/release/v*' \
-              | sed 's|.*origin/||' \
-              | { grep -E '^release/v[0-9]+\.[0-9]+\.x$' || true; } \
-              | sort -t. -k1,1n -k2,2n | tail -1)
-            if [[ -z "$BRANCH" ]]; then
-              echo "::error::No release/vX.Y.x branches found on remote"
-              exit 1
-            fi
-          elif [[ "$INPUT" =~ ^release/v[0-9]+\.[0-9]+\.x$ ]]; then
-            BRANCH="$INPUT"
+          if [[ "$BRANCH" == "main" ]]; then
+            echo "mode=minor" >> "$GITHUB_OUTPUT"
+          elif [[ "$BRANCH" =~ ^release/v[0-9]+\.[0-9]+\.x$ ]]; then
+            echo "mode=patch" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::Invalid branch: '${INPUT}'. Use 'main', 'latest-release-branch', or 'release/vX.Y.x'"
+            echo "::error::Release must be run from 'main' or 'release/vX.Y.x'. Selected branch: '${BRANCH}'"
             exit 1
           fi
 
-          git checkout -B "$BRANCH" "origin/$BRANCH"
           echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
           echo "### Building from branch: \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
 
