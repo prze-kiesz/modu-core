@@ -55,6 +55,7 @@ int main(const int argc, const char *argv[]) {
   }
 
   // Shutdown Google's logging library
+  LOG(INFO) << "Shutdown complete.";
   google::ShutdownGoogleLogging();
 
   return 0;
