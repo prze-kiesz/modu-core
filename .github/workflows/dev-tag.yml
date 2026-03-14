@@ -1,0 +1,60 @@
+name: Dev Tag
+
+# Triggered on every merge (push) to main.
+# Creates a tag: modu-core-v<MAJOR>.<MINOR>.<PATCH>-dev.<N>
+# where MAJOR.MINOR.PATCH comes from the VERSION file and N is auto-incremented
+# by counting existing dev tags since the last release tag.
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.devcontainer/**'
+      - 'LICENSE'
+
+jobs:
+  dev-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push tags
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history needed to list all tags
+
+      - name: Compute and push dev tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          MAJOR=$(grep -E '^MAJOR=' VERSION | cut -d= -f2 | tr -d '[:space:]')
+          PREFIX="modu-core-v"
+
+          # Find the latest release tag for this MAJOR
+          LATEST_RELEASE=$(git tag -l "${PREFIX}${MAJOR}.*" \
+            | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+            | sort -V | tail -1)
+
+          if [ -z "$LATEST_RELEASE" ]; then
+            # No release tag yet — base dev numbering on MAJOR.0.0
+            BASE="${PREFIX}${MAJOR}.0.0"
+            HIGHEST_DEV=$(git tag -l "${BASE}-dev.*" \
+              | awk -F'dev.' '{print $2}' | sort -n | tail -1)
+            TAG="${BASE}-dev.$(( ${HIGHEST_DEV:-0} + 1 ))"
+          else
+            HIGHEST_DEV=$(git tag -l "${LATEST_RELEASE}-dev.*" \
+              | awk -F'dev.' '{print $2}' | sort -n | tail -1)
+            TAG="${LATEST_RELEASE}-dev.$(( ${HIGHEST_DEV:-0} + 1 ))"
+          fi
+
+          echo "Creating tag: ${TAG}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "${TAG}"
+          git push origin "${TAG}"
+          echo "tag=${TAG}" >> "$GITHUB_STEP_SUMMARY"

@@ -16,6 +16,10 @@ target_include_directories(${CMAKE_PROJECT_NAME}
         ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+install(TARGETS ${CMAKE_PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 
 # L5 layer modules
 find_package("comm_main" REQUIRED)

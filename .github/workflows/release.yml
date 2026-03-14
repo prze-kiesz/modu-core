@@ -1,0 +1,152 @@
+name: Release
+
+# Unified release workflow — creates a new release from any branch.
+#
+# branch = "main"                   → MINOR bump → modu-core-vX.(Y+1).0
+# branch = "latest-release-branch"  → PATCH bump → modu-core-vX.Y.(Z+1)  (auto-detects latest release/vX.Y.x)
+# branch = "release/vX.Y.x"         → PATCH bump → modu-core-vX.Y.(Z+1)  (specific release branch)
+#
+# Typical flows:
+#   Feature release:  run on "main"             → modu-core-v1.2.0
+#   Hotfix release:   run on "release/v1.2.x"   → modu-core-v1.2.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to release from: "main" (MINOR bump), "latest-release-branch" (PATCH, auto-detect), or "release/vX.Y.x" (PATCH bump)'
+        required: true
+        default: 'main'
+      dry_run:
+        description: 'Dry run: compute tag but do not push or publish'
+        type: boolean
+        default: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to push tags and create GitHub Release
+    container:
+      image: ghcr.io/prze-kiesz/modu-core:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --user root
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + all tags
+
+      - name: Resolve and checkout branch
+        id: branch
+        run: |
+          set -euo pipefail
+          INPUT="${{ inputs.branch }}"
+
+          if [[ "$INPUT" == "main" ]]; then
+            BRANCH="main"
+          elif [[ "$INPUT" == "latest-release-branch" ]]; then
+            BRANCH=$(git branch -r --list 'origin/release/v*' \
+              | sed 's|.*origin/||' \
+              | grep -E '^release/v[0-9]+\.[0-9]+\.x$' \
+              | sort -t. -k1,1n -k2,2n | tail -1)
+            if [[ -z "$BRANCH" ]]; then
+              echo "::error::No release/vX.Y.x branches found on remote"
+              exit 1
+            fi
+          elif [[ "$INPUT" =~ ^release/v[0-9]+\.[0-9]+\.x$ ]]; then
+            BRANCH="$INPUT"
+          else
+            echo "::error::Invalid branch: '${INPUT}'. Use 'main', 'latest-release-branch', or 'release/vX.Y.x'"
+            exit 1
+          fi
+
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "### Building from branch: \`${BRANCH}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Compute release tag
+        id: version
+        run: |
+          set -euo pipefail
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          PREFIX="modu-core-v"
+
+          if [[ "$BRANCH" == "main" ]]; then
+            # MINOR bump: vMAJOR.(MINOR+1).0
+            MAJOR=$(grep -E '^MAJOR=' VERSION | cut -d= -f2 | tr -d '[:space:]')
+
+            HIGHEST_MINOR=$(git tag -l "${PREFIX}${MAJOR}.*.0" \
+              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | awk -F'[v.]' '{print $(NF-1)}' | sort -n | tail -1)
+
+            NEXT_MINOR=$(( ${HIGHEST_MINOR:-0} + 1 ))
+            TAG="${PREFIX}${MAJOR}.${NEXT_MINOR}.0"
+            VERSION="${MAJOR}.${NEXT_MINOR}.0"
+            PREV_TAG="${PREFIX}${MAJOR}.${HIGHEST_MINOR:-0}.0"
+          else
+            # PATCH bump: vMAJOR.MINOR.(PATCH+1)
+            VERSION_PART="${BRANCH#release/v}"   # e.g. "1.2.x"
+            MAJOR=$(echo "$VERSION_PART" | cut -d. -f1)
+            MINOR=$(echo "$VERSION_PART" | cut -d. -f2)
+
+            HIGHEST_PATCH=$(git tag -l "${PREFIX}${MAJOR}.${MINOR}.*" \
+              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+              | awk -F. '{print $NF}' | sort -n | tail -1)
+
+            NEXT_PATCH=$(( ${HIGHEST_PATCH:-0} + 1 ))
+            TAG="${PREFIX}${MAJOR}.${MINOR}.${NEXT_PATCH}"
+            VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+            PREV_TAG="${PREFIX}${MAJOR}.${MINOR}.$((NEXT_PATCH - 1))"
+          fi
+
+          echo "tag=${TAG}"           >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}"   >> "$GITHUB_OUTPUT"
+          echo "prev_tag=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "### Release tag: \`${TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build
+        run: |
+          cmake -S . -B build-release \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF \
+            -DMODU_CORE_VERSION="${{ steps.version.outputs.tag }}"
+          cmake --build build-release -j$(nproc)
+
+      - name: Package (.deb)
+        run: |
+          cd build-release
+          cpack --config CPackConfig.cmake
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" \
+            -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Publish GitHub Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          PREV_TAG="${{ steps.version.outputs.prev_tag }}"
+          DEB=$(ls build-release/*.deb)
+
+          NOTES_ARGS=""
+          if git rev-parse "${PREV_TAG}" >/dev/null 2>&1; then
+            NOTES_ARGS="--notes-start-tag ${PREV_TAG}"
+          fi
+
+          gh release create "${TAG}" \
+            --title "${TAG}" \
+            --generate-notes \
+            ${NOTES_ARGS} \
+            "build-release/main/modu-core#modu-core-binary" \
+            "${DEB}#Debian package"

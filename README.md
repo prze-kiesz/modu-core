@@ -106,6 +106,7 @@ Details: [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md)
 |---|---|
 | [docs/MODULE_TEMPLATE.md](docs/MODULE_TEMPLATE.md) | How to create a new module (skeleton + CMake patterns) |
 | [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md) | Config hot-reload mechanics, SIGHUP flow |
+| [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) | Versioning scheme, release lifecycle, hotfix flow |
 | [docs/BRANCH_PROTECTION.md](docs/BRANCH_PROTECTION.md) | Branch protection rules and PR policy |
 | [.devcontainer/README.md](.devcontainer/README.md) | Devcontainer setup, image tagging, multi-arch |
 | [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) | Contribution workflow, commit conventions |
@@ -118,6 +119,14 @@ Details: [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md)
 cmake -S . -B build-test -DBUILD_TESTS=ON
 cmake --build build-test -j$(nproc)
 
+# Run the application
+mkdir -p ~/.config/modu-core
+cat > ~/.config/modu-core/config.toml << 'EOF'
+[app]
+log_level = "info"
+EOF
+./build-test/main/modu-core
+
 # Unit tests
 ctest --test-dir build-test --output-on-failure
 
@@ -125,6 +134,10 @@ ctest --test-dir build-test --output-on-failure
 MODU_CORE_BINARY=./build-test/main/modu-core \
   pytest L0_AcceptanceTests/test_pytest/ -v
 ```
+
+The application looks for `config.toml` in `$XDG_CONFIG_HOME/modu-core/` (default `~/.config/modu-core/`).  
+Send `SIGTERM` or `Ctrl+C` to shut down gracefully. `SIGHUP` reloads config without restart.  
+See [docs/SIGHUP_CONFIG_RELOAD.md](docs/SIGHUP_CONFIG_RELOAD.md) for details.
 
 The recommended dev environment is the prebuilt devcontainer (`ghcr.io/prze-kiesz/modu-core:latest`).  
 See [.devcontainer/README.md](.devcontainer/README.md) for details.
@@ -136,6 +149,11 @@ GitHub Actions runs on every push and PR:
 - **Build and Test** — Debug + Release matrix, CTest unit tests + pytest-bdd acceptance tests
 - **Static Analysis** — clang-tidy, cppcheck, clang-format
 - **Docker Build** — publishes devcontainer image to `ghcr.io/prze-kiesz/modu-core`
+- **Dev Tag** — auto-tags `modu-core-vX.Y.Z-dev.N` on every merge to `main`
+- **Release** — manual workflow: MINOR bump from `main`, PATCH bump from `release/vX.Y.x`; produces binary + `.deb`
+- **Create Release Branch** — manual workflow: creates `release/vX.Y.x` from a release tag for hotfixes
+
+See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for the full versioning and release lifecycle.
 
 ## Contributing
 

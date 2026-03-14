@@ -10,8 +10,9 @@ features/startup_shutdown.feature.
 Edge cases (ordering checks, stress) use raw pytest.
 """
 
+import re
 import pytest
-from pytest_bdd import scenario, given, then, when
+from pytest_bdd import scenario, given, then, when, parsers
 
 FEATURE = "features/startup_shutdown.feature"
 
@@ -19,6 +20,12 @@ FEATURE = "features/startup_shutdown.feature"
 # ---------------------------------------------------------------------------
 # BDD scenarios — map directly to Gherkin in the .feature file
 # ---------------------------------------------------------------------------
+
+@pytest.mark.timeout(15)
+@scenario(FEATURE, "Application logs its version on startup")
+def test_application_logs_version_on_startup():
+    pass
+
 
 @pytest.mark.timeout(15)
 @scenario(FEATURE, "Application starts and becomes ready")
@@ -54,6 +61,17 @@ def test_double_sigint_forces_immediate_exit():
 def app_is_started(launch_app):
     """Start the application without waiting for the ready state."""
     return launch_app()
+
+
+@then(parsers.re(r'the startup log contains a version tag matching "(?P<pattern>[^"]+)"'))
+def startup_log_contains_version(running_app, pattern):
+    running_app.logs.wait_for("Starting ", timeout=10)
+    log_text = "\n".join(running_app.logs.lines())
+    match = re.search(pattern, log_text)
+    assert match, (
+        f"No version tag matching '{pattern}' found in startup logs.\n"
+        f"Logs:\n{log_text}"
+    )
 
 
 @then("there are no ERROR lines in the startup logs")

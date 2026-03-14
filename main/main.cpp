@@ -16,7 +16,7 @@ int main(const int argc, const char *argv[]) {
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
   
-  LOG(INFO) << "Starting " << PROJECT_NAME << " v" << PROJECT_VERSION;
+  LOG(INFO) << "Starting " << PROJECT_TAG << " (" << PROJECT_VERSION << ")";
 
   // Initialize all layers starting from the lowest one.
   
