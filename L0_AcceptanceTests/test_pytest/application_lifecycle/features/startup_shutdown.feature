@@ -1,5 +1,9 @@
 Feature: Application Lifecycle
 
+  Scenario: Application logs its version on startup
+    Given the application is started
+    Then the startup log contains a version tag matching "modu-core-v\d+\.\d+\.\d+"
+
   Scenario: Application starts and becomes ready
     Given the application is started
     Then the log contains "Waiting for application termination"
