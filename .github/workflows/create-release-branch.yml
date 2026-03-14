@@ -31,6 +31,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Mark repo as safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Resolve tag and create branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
