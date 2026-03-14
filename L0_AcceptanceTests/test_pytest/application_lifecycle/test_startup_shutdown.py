@@ -45,7 +45,7 @@ def test_sigint_triggers_graceful_shutdown():
     pass
 
 
-@pytest.mark.timeout(15)
+@pytest.mark.timeout(30)
 @scenario(FEATURE, "Double SIGINT forces immediate exit with code 130")
 def test_double_sigint_forces_immediate_exit():
     pass

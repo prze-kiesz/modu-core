@@ -174,6 +174,12 @@ def send_sigint(running_app):
     running_app.sigint()
 
 
+@when("SIGINT is sent again")
+def send_sigint_again(running_app):
+    running_app.logs.wait_for("First SIGINT received", timeout=5)
+    running_app.sigint()
+
+
 @when("SIGHUP is sent")
 def send_sighup(running_app):
     running_app.sighup()
