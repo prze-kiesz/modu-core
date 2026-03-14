@@ -10,6 +10,9 @@ name: Release
 #   Feature release:  run on "main"             → modu-core-v1.2.0
 #   Hotfix release:   run on "release/v1.2.x"   → modu-core-v1.2.1
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   workflow_dispatch:
     inputs:

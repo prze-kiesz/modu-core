@@ -5,6 +5,9 @@ name: Dev Tag
 # where MAJOR.MINOR.PATCH comes from the VERSION file and N is auto-incremented
 # by counting existing dev tags since the last release tag.
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   push:
     branches:

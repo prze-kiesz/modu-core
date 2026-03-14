@@ -8,6 +8,9 @@ name: Create Release Branch
 #   Tag:    modu-core-v1.2.0
 #   Branch: release/v1.2.x  →  then Release workflow on "release/v1.2.x" → modu-core-v1.2.1
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 on:
   workflow_dispatch:
     inputs:
