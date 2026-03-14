@@ -174,10 +174,20 @@ def send_sigint(running_app):
     running_app.sigint()
 
 
-@when("SIGINT is sent again")
-def send_sigint_again(running_app):
-    running_app.logs.wait_for("First SIGINT received", timeout=5)
-    running_app.sigint()
+@when("two SIGINTs are sent in quick succession")
+def send_double_sigint(running_app):
+    import threading
+
+    def send_second():
+        # Block until signal handler logs first SIGINT acknowledgment,
+        # then immediately fire the second one.
+        running_app.logs.wait_for("First SIGINT received", timeout=5)
+        running_app.sigint()
+
+    t = threading.Thread(target=send_second, daemon=True)
+    t.start()           # thread is now waiting on the log line
+    running_app.sigint() # send first SIGINT
+    t.join(timeout=10)
 
 
 @when("SIGHUP is sent")

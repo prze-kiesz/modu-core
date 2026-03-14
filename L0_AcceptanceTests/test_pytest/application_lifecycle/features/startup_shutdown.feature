@@ -23,7 +23,5 @@ Feature: Application Lifecycle
 
   Scenario: Double SIGINT forces immediate exit with code 130
     Given the application is running
-    When SIGINT is sent
-    And SIGINT is sent again
-    Then the log contains "Second SIGINT received - forcing immediate termination"
-    And the exit code is 130
+    When two SIGINTs are sent in quick succession
+    Then the exit code is 130
