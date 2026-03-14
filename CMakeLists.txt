@@ -3,14 +3,17 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-# Version is computed by CI and passed as -DMODU_CORE_VERSION=X.Y.Z.
-# Local builds fall back to 0.0.0 — pass -DMODU_CORE_VERSION=... to override.
+# CI passes the full release tag as -DMODU_CORE_VERSION=modu-core-vX.Y.Z.
 # MAJOR is managed in the VERSION file (bash-sourceable: "MAJOR=1").
+# Local builds fall back to modu-core-v0.0.0.
 if(NOT DEFINED MODU_CORE_VERSION)
-  set(MODU_CORE_VERSION "0.0.0")
+  set(MODU_CORE_VERSION "modu-core-v0.0.0")
 endif()
 
-project("modu-core" VERSION ${MODU_CORE_VERSION} LANGUAGES CXX)
+# Strip "modu-core-v" prefix → numeric X.Y.Z for project() and CPack
+string(REGEX REPLACE "^modu-core-v" "" MODU_CORE_NUMERIC_VERSION "${MODU_CORE_VERSION}")
+
+project("modu-core" VERSION ${MODU_CORE_NUMERIC_VERSION} LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 
@@ -71,7 +74,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 # ####################
 # CPack — Debian package
 set(CPACK_PACKAGE_NAME "modu-core")
-set(CPACK_PACKAGE_VERSION "${MODU_CORE_VERSION}")
+set(CPACK_PACKAGE_VERSION "${MODU_CORE_NUMERIC_VERSION}")
 set(CPACK_PACKAGE_CONTACT "Przemek Kieszkowski")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C++20 application framework skeleton")
 set(CPACK_GENERATOR "DEB")
