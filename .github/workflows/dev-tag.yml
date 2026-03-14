@@ -32,31 +32,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          VERSION=$(cat VERSION | tr -d '[:space:]')
+          MAJOR=$(grep -E '^MAJOR=' VERSION | cut -d= -f2 | tr -d '[:space:]')
           PREFIX="modu-core-v"
 
-          # Find the latest release tag for this exact version (X.Y.Z, no suffix)
-          LATEST_RELEASE=$(git tag -l "${PREFIX}${VERSION}" | sort -V | tail -1)
+          # Find the latest release tag for this MAJOR
+          LATEST_RELEASE=$(git tag -l "${PREFIX}${MAJOR}.*" \
+            | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
+            | sort -V | tail -1)
 
           if [ -z "$LATEST_RELEASE" ]; then
-            # No release tag yet — count dev tags since any release with same MAJOR
-            MAJOR=$(echo "$VERSION" | cut -d. -f1)
-            LATEST_RELEASE=$(git tag -l "${PREFIX}${MAJOR}.*" \
-              | grep -E "^${PREFIX}[0-9]+\.[0-9]+\.[0-9]+$" \
-              | sort -V | tail -1)
-          fi
-
-          if [ -z "$LATEST_RELEASE" ]; then
-            # No release tag at all — base dev numbering on dev tags for this version
-            HIGHEST_DEV=$(git tag -l "${PREFIX}${VERSION}-dev.*" \
+            # No release tag yet — base dev numbering on MAJOR.0.0
+            BASE="${PREFIX}${MAJOR}.0.0"
+            HIGHEST_DEV=$(git tag -l "${BASE}-dev.*" \
               | awk -F'dev.' '{print $2}' | sort -n | tail -1)
+            TAG="${BASE}-dev.$(( ${HIGHEST_DEV:-0} + 1 ))"
           else
             HIGHEST_DEV=$(git tag -l "${LATEST_RELEASE}-dev.*" \
               | awk -F'dev.' '{print $2}' | sort -n | tail -1)
+            TAG="${LATEST_RELEASE}-dev.$(( ${HIGHEST_DEV:-0} + 1 ))"
           fi
-
-          NEXT_DEV=$(( ${HIGHEST_DEV:-0} + 1 ))
-          TAG="${PREFIX}${VERSION}-dev.${NEXT_DEV}"
 
           echo "Creating tag: ${TAG}"
           git config user.name  "github-actions[bot]"
