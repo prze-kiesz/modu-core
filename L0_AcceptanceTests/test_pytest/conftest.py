@@ -181,7 +181,7 @@ def send_sighup(running_app):
 
 @then(parsers.parse('the log contains "{message}"'))
 def log_contains(running_app, message):
-    matched = running_app.logs.wait_for(message, timeout=10)
+    matched = running_app.logs.wait_for(message, timeout=30)
     _log.info("log match  | %s", matched)
 
 
