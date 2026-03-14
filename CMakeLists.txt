@@ -3,16 +3,11 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-# Parse MAJOR from VERSION file (bash-sourceable: "MAJOR=1").
-# CI passes the full version via -DMODU_CORE_VERSION=X.Y.Z.
-# Local builds default to MAJOR.0.0.
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" _version_file)
-string(REGEX MATCH "MAJOR=([0-9]+)" _ "${_version_file}")
-if(NOT CMAKE_MATCH_1)
-  message(FATAL_ERROR "VERSION file must contain 'MAJOR=<number>'")
-endif()
+# Version is computed by CI and passed as -DMODU_CORE_VERSION=X.Y.Z.
+# Local builds fall back to 0.0.0 — pass -DMODU_CORE_VERSION=... to override.
+# MAJOR is managed in the VERSION file (bash-sourceable: "MAJOR=1").
 if(NOT DEFINED MODU_CORE_VERSION)
-  set(MODU_CORE_VERSION "${CMAKE_MATCH_1}.0.0")
+  set(MODU_CORE_VERSION "0.0.0")
 endif()
 
 project("modu-core" VERSION ${MODU_CORE_VERSION} LANGUAGES CXX)
